@@ -618,7 +618,7 @@ export default function Page() {
                     fontWeight: 750,
                     letterSpacing: '0.01em',
                     color: 'rgb(255, 224, 102)',
-                    fontFamily: 'cursive',
+                    fontFamily: `cursive ,'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`,
                     lineHeight: 1.18,
                     paddingLeft: 18,
                     textAlign: 'center',
