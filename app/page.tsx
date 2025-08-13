@@ -573,7 +573,7 @@ export default function Page() {
                   lineHeight: 1.2,
                   textAlign: 'center',
                   color: 'rgb(255, 224, 102)',
-                  fontFamily: 'cursive, Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                  fontFamily: 'raleway',
                   textShadow: 'rgba(255, 224, 102, 0.15) 0px 0px 6px'
                 }}
               >
