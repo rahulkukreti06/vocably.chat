@@ -159,9 +159,11 @@ export default function Page() {
   // Fetch rooms from Supabase and subscribe to real-time changes
   useEffect(() => {
     let subscription: any;
-  // Firebase removed
-    
+    let pollTimer: any;
+    // Firebase removed
+
     async function fetchRooms() {
+      // Initial load (controls spinner)
       setRoomsLoading(true);
       const { data, error } = await supabase
         .from('rooms')
@@ -172,16 +174,43 @@ export default function Page() {
       }
       setRoomsLoading(false);
     }
+
+    async function refreshRooms() {
+      // Silent refresh (no spinner/flicker)
+      const { data, error } = await supabase
+        .from('rooms')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && data) {
+        setRooms(prev => {
+          // Avoid unnecessary re-renders if unchanged
+          if (prev.length === data.length && prev.every((r, i) => r.id === data[i].id && r.participants === data[i].participants)) {
+            return prev;
+          }
+          return data;
+        });
+      }
+    }
+
+    // Initial fetch
     fetchRooms();
-    // Subscribe to real-time changes
+
+    // Subscribe to real-time changes (silent refresh)
     subscription = supabase
       .channel('public:rooms')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms' }, (payload) => {
-        fetchRooms();
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms' }, () => {
+        refreshRooms();
       })
       .subscribe();
+
+    // Fallback polling: keep room list in sync even if VPS WS is down
+    pollTimer = setInterval(() => {
+      refreshRooms();
+    }, 5000);
+
     return () => {
       if (subscription) supabase.removeChannel(subscription);
+      if (pollTimer) clearInterval(pollTimer);
     };
   }, []);
 
@@ -377,7 +406,8 @@ export default function Page() {
 
     // Notify all clients via WebSocket (real-time update)
     try {
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
+      const rawUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
+      const wsUrl = rawUrl.replace(/\/+$/, '');
       const ws = new window.WebSocket(wsUrl);
       ws.onopen = () => {
         ws.send(JSON.stringify({ type: 'room_created', room: minimalRoom }));
