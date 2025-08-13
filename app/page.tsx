@@ -573,7 +573,7 @@ export default function Page() {
                   lineHeight: 1.2,
                   textAlign: 'center',
                   color: 'rgb(255, 224, 102)',
-                  fontFamily: 'raleway',
+                  fontFamily: 'cursive, Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
                   textShadow: 'rgba(255, 224, 102, 0.15) 0px 0px 6px'
                 }}
               >
@@ -649,9 +649,9 @@ export default function Page() {
                     fontWeight: 750,
                     letterSpacing: '0.01em',
                     color: 'rgb(255, 224, 102)',
-                    fontFamily: `cursive ,'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`,
+                    fontFamily: `Montserrat`,
                     lineHeight: 1.18,
-                    paddingLeft: 18,
+                    paddingLeft: 23,
                     textAlign: 'center',
                     flex: '0 0 100%'
                   }}
