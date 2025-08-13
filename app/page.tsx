@@ -620,7 +620,7 @@ export default function Page() {
                     color: 'rgb(255, 224, 102)',
                     fontFamily: `raph levien`,
                     lineHeight: 1.18,
-                    paddingLeft: 26,
+                    paddingLeft: 24,
                     textAlign: 'center',
                     flex: '0 0 100%'
                   }}
