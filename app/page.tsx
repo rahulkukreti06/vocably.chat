@@ -159,6 +159,7 @@ export default function Page() {
   // Fetch rooms from Supabase and subscribe to real-time changes
   useEffect(() => {
     let subscription: any;
+    let pollInterval: NodeJS.Timeout | null = null;
   // Firebase removed
     
     async function fetchRooms() {
@@ -180,8 +181,12 @@ export default function Page() {
         fetchRooms();
       })
       .subscribe();
+
+    // Fallback: Poll every 5s in case realtime or WS is unavailable
+    pollInterval = setInterval(fetchRooms, 5000);
     return () => {
       if (subscription) supabase.removeChannel(subscription);
+      if (pollInterval) clearInterval(pollInterval);
     };
   }, []);
 
@@ -614,13 +619,13 @@ export default function Page() {
                 <div
                   style={{
                     margin: '10px auto 16px 0px',
-                    fontSize: '1.3rem',
+                    fontSize: '1.2rem',
                     fontWeight: 750,
                     letterSpacing: '0.01em',
                     color: 'rgb(255, 224, 102)',
-                    fontFamily: `raph levien`,
+                    fontFamily: `cursive ,'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`,
                     lineHeight: 1.18,
-                    paddingLeft: 24,
+                    paddingLeft: 18,
                     textAlign: 'center',
                     flex: '0 0 100%'
                   }}
