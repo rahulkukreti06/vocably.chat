@@ -30,7 +30,9 @@ export function useLiveParticipantCounts(rooms: { id: string }[]) {
 
     // WebSocket real-time updates with exponential backoff
     function setupWebSocket() {
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
+      const rawUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
+      // Trim trailing slashes to avoid proxy path mismatches like /ws/ vs /ws
+      const wsUrl = rawUrl.replace(/\/+$/, '');
       ws = new window.WebSocket(wsUrl);
       wsRef.current = ws;
       ws.onopen = () => {
