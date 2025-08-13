@@ -159,11 +159,10 @@ export default function Page() {
   // Fetch rooms from Supabase and subscribe to real-time changes
   useEffect(() => {
     let subscription: any;
-    let pollInterval: NodeJS.Timeout | null = null;
   // Firebase removed
     
-    async function fetchRooms(showSpinner: boolean = false) {
-      if (showSpinner) setRoomsLoading(true);
+    async function fetchRooms() {
+      setRoomsLoading(true);
       const { data, error } = await supabase
         .from('rooms')
         .select('*')
@@ -171,24 +170,18 @@ export default function Page() {
       if (!error && data) {
         setRooms(data);
       }
-      if (showSpinner) setRoomsLoading(false);
+      setRoomsLoading(false);
     }
-    // Initial fetch shows spinner
-    fetchRooms(true);
+    fetchRooms();
     // Subscribe to real-time changes
     subscription = supabase
       .channel('public:rooms')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms' }, (payload) => {
-        // Refresh silently on realtime events
-        fetchRooms(false);
+        fetchRooms();
       })
       .subscribe();
-
-    // Fallback: Poll every 5s in case realtime or WS is unavailable
-    pollInterval = setInterval(() => fetchRooms(false), 5000);
     return () => {
       if (subscription) supabase.removeChannel(subscription);
-      if (pollInterval) clearInterval(pollInterval);
     };
   }, []);
 
