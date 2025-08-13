@@ -187,7 +187,8 @@ export default function Page() {
 
   // Listen for new room creation via WebSocket and update the room list in real-time
   useEffect(() => {
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
+    const rawUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
+    const wsUrl = rawUrl.replace(/\/+$/, '');
     const ws = new window.WebSocket(wsUrl);
     ws.onmessage = (event) => {
       try {
