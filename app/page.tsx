@@ -614,13 +614,13 @@ export default function Page() {
                 <div
                   style={{
                     margin: '10px auto 16px 0px',
-                    fontSize: '1.2rem',
+                    fontSize: '1.3rem',
                     fontWeight: 750,
                     letterSpacing: '0.01em',
                     color: 'rgb(255, 224, 102)',
-                    fontFamily: `cursive ,'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`,
+                    fontFamily: `raph levien`,
                     lineHeight: 1.18,
-                    paddingLeft: 18,
+                    paddingLeft: 26,
                     textAlign: 'center',
                     flex: '0 0 100%'
                   }}
