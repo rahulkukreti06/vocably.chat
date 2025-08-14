@@ -16,6 +16,7 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
   const hasJoinedRef = useRef(false);
   const hasLeftRef = useRef(false);
   const leaveInFlightRef = useRef<Promise<void> | null>(null);
+  const resizeCleanupRef = useRef<(() => void) | null>(null);
 
   // Decrement count once, only if actually joined
   const leaveOnce = React.useCallback(() => {
@@ -94,7 +95,8 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
       roomName: subject || roomName, // Use actual room name (subject) instead of room ID
       parentNode: jitsiContainerRef.current,
       width: '100%',
-      height: '100vh',
+      // Use container-driven sizing; we'll manage height dynamically for mobile correctness
+      height: '100%',
       userInfo: {
         displayName: session?.user?.name || 'Guest'
       },
@@ -135,6 +137,38 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
     const createJitsi = () => {
       const api = new window.JitsiMeetExternalAPI(domain, options);
       apiRef.current = api;
+
+      // Dynamic height adjustment to avoid bottom being cut on mobile
+      const setSize = () => {
+        try {
+          const vh = Math.round((window as any).visualViewport?.height || window.innerHeight);
+          if (jitsiContainerRef.current) {
+            jitsiContainerRef.current.style.height = `${vh}px`;
+          }
+          if (apiRef.current && typeof apiRef.current.resize === 'function') {
+            apiRef.current.resize('100%', vh);
+          }
+        } catch {}
+      };
+      // Initial and delayed adjustments (address bar collapse etc.)
+      setSize();
+      setTimeout(setSize, 300);
+      setTimeout(setSize, 1200);
+
+      const onResize = () => setSize();
+      const onOrientation = () => setTimeout(setSize, 150);
+      window.addEventListener('resize', onResize);
+      window.addEventListener('orientationchange', onOrientation);
+      if ((window as any).visualViewport) {
+        (window as any).visualViewport.addEventListener('resize', onResize);
+      }
+      resizeCleanupRef.current = () => {
+        window.removeEventListener('resize', onResize);
+        window.removeEventListener('orientationchange', onOrientation);
+        if ((window as any).visualViewport) {
+          (window as any).visualViewport.removeEventListener('resize', onResize);
+        }
+      };
 
       // Auto-click "Join in browser" on mobile devices
       const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -319,6 +353,10 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
       
       if (jitsiContainerRef.current) {
         jitsiContainerRef.current.innerHTML = '';
+      }
+      if (resizeCleanupRef.current) {
+        resizeCleanupRef.current();
+        resizeCleanupRef.current = null;
       }
     };
   }, [roomName, subject, roomId, session?.user?.name, router]);
