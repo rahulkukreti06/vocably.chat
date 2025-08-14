@@ -89,6 +89,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: 'cover',
 };
 
 // Google Analytics 4 Measurement ID
@@ -98,9 +99,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, shrink-to-fit=no' />
+        <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, shrink-to-fit=no, viewport-fit=cover' />
         <link rel="canonical" href="https://vocably.chat/" />
         <meta name="keywords" content="language learning, voice chat, practice English, make friends, talk to strangers, global community, learn languages, public rooms, private rooms, Vocably" />
+  {/* Jitsi perf hints */}
+  <link rel="dns-prefetch" href="https://api.vocably.chat" />
+  <link rel="preconnect" href="https://api.vocably.chat" crossOrigin="anonymous" />
+  <link rel="preload" as="script" href="https://api.vocably.chat/external_api.js" />
         
         {/* Google Analytics 4 */}
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-MM47J30M5G"></script>
