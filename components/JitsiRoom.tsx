@@ -364,6 +364,6 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
   return <div
     ref={jitsiContainerRef}
     id="jitsi-container"
-    style={{ width: '100vw', height: '100dvh', margin: 0, padding: 0, overflow: 'hidden', background: '#101014' }}
+    style={{ width: '100%', maxWidth: '100%', height: '100dvh', margin: 0, padding: 0, overflow: 'hidden', background: '#101014' }}
   />;
 }
