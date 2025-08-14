@@ -64,6 +64,11 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* On small screens, avoid using 100vw which can include scrollbar width and cause left gaps */
+@media (max-width: 640px) {
+  html, body { width: 100% !important; }
+}
+
 /* Prevent the recurring top gap under the fixed header on new pages.
    Many elements (like h1) have default margin-top that collapses with the page root.
    This normalizes the first child so each page doesn't need a manual fix. */
@@ -173,6 +178,38 @@ img, video, iframe {
 
 html {
   color-scheme: dark;
+}
+
+/* === Fullscreen page wrapper fix ===
+   Ensure the global main-content wrapper never adds side padding/margins that
+   cause the Jitsi room (and other full-screen views) to shift left or show gaps
+   at the bottom on small screens or after refresh. Individual pages manage their
+   own padding within their own containers. */
+body .main-content {
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: 100vw !important;
+}
+@media (max-width: 1280px) {
+  body .main-content { padding-left: 0 !important; padding-right: 0 !important; }
+}
+@media (max-width: 1024px) {
+  body .main-content { padding-left: 0 !important; padding-right: 0 !important; }
+}
+@media (max-width: 900px) {
+  body .main-content { padding-left: 0 !important; padding-right: 0 !important; }
+}
+@media (max-width: 768px) {
+  body .main-content { padding-left: 0 !important; padding-right: 0 !important; }
+}
+@media (max-width: 640px) {
+  body .main-content { padding: 0 !important; }
+}
+@media (max-width: 600px) {
+  body .main-content { padding: 0 !important; }
+}
+@media (max-width: 400px) {
+  body .main-content { padding: 0 !important; }
 }
 
 /* Modern, minimal dark scrollbar */
