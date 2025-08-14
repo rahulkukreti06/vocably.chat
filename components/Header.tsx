@@ -78,7 +78,10 @@ export function SearchBar({ searchTerm, onSearchChange }: { searchTerm?: string,
           fontSize: 16,
           border: isFocused ? '1.5px solid #ffd700' : '1.5px solid #23272f',
           outline: 'none',
-      padding: typeof window !== 'undefined' && window.innerWidth <= 600 ? '19px 12px' : '21px 12px',
+          // Ensure SSR and first client render match to avoid hydration warnings
+          padding: (mounted && typeof window !== 'undefined' && window.innerWidth <= 600)
+            ? '19px 12px'
+            : '21px 12px',
           borderRadius: 8,
           boxShadow: '0 2px 8px #0002',
           minHeight: 40,
