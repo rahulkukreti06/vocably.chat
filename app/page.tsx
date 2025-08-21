@@ -529,33 +529,7 @@ export default function Page() {
               >
                 + Create Room
               </button>
-              <a
-                href="https://www.buymeacoffee.com/rahulkukreti06"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  textDecoration: 'none',
-                  height: '40px',
-                  minWidth: '140px',
-                  width: 'auto',
-                  flexShrink: 0,
-                }}
-              >
-                <img 
-                  src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" 
-                  alt="Buy Me A Coffee" 
-                  style={{ 
-                    height: '100%',
-                    width: '100%',
-                    objectFit: 'contain',
-                    borderRadius: '12px',
-                    display: 'block'
-                  }} 
-                />
-              </a>
+             
             </div>
           </div>
         ) : (
