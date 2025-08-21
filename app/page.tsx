@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { FaUser, FaLock, FaComments, FaFilter } from 'react-icons/fa';
+import { FaUser, FaLock, FaComments, FaFilter, FaReddit } from 'react-icons/fa';
 import { Plus } from 'lucide-react';
 import { Header, SearchBar } from '../components/Header';
 import { RoomList } from '../components/RoomList';
@@ -761,9 +761,7 @@ export default function Page() {
                     }}
                     aria-label="Reddit community for suggestions, bugs & reports"
                   >
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" style={{ flexShrink: 0, marginRight: 8 }}>
-                      <path d="M10 0C4.48 0 0 4.48 0 10c0 4.42 2.87 8.17 6.84 9.5.5.09.68-.22.68-.48v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.93.68 1.87v2.77c0 .26.18.58.69.48C17.14 18.16 20 14.42 20 10c0-5.52-4.48-10-10-10z"/>
-                    </svg>
+                   <FaReddit size={18} style={{ flexShrink: 0, marginRight: 8, color: '#FF4500' }} />
                     <div style={{ position: 'relative', flex: 1, height: '100%', display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
                       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
                         <div style={{position:'absolute',left:0,top:0,bottom:0,width:20,background:'linear-gradient(90deg,#000,rgba(0,0,0,0))'}} />
@@ -946,9 +944,7 @@ export default function Page() {
                     }}
                     aria-label="Reddit community for suggestions, bugs & reports"
                   >
-                    <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" style={{ flexShrink: 0, marginRight: 4 }}>
-                      <path d="M10 0C4.48 0 0 4.48 0 10c0 4.42 2.87 8.17 6.84 9.5.5.09.68-.22.68-.48v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.93.68 1.87v2.77c0 .26.18.58.69.48C17.14 18.16 20 14.42 20 10c0-5.52-4.48-10-10-10z"/>
-                    </svg>
+                   <FaReddit size={18} style={{ flexShrink: 0, marginRight: 4, color: '#FF4500' }} />
                     <div style={{ position: 'relative', flex: 1, height: '100%', display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
                       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
                         <div style={{position:'absolute',left:0,top:0,bottom:0,width:14,background:'linear-gradient(90deg,#000,rgba(0,0,0,0))'}} />
