@@ -623,7 +623,7 @@ export default function Page() {
                     fontWeight: 750,
                     letterSpacing: '0.01em',
                     color: 'rgb(255, 224, 102)',
-                    fontFamily: `monospace`,
+                    fontFamily: `"Comic Sans MS", "Comic Sans"`,
                     lineHeight: 1.18,
                     paddingLeft: 23,
                     textAlign: 'center',
