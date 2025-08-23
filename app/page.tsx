@@ -404,6 +404,9 @@ export default function Page() {
     setShowCreateModal(false);
     setRooms(prevRooms => [newRoom, ...prevRooms]);
 
+     // Instantly join the newly created room
+    router.push(`/rooms/${newRoom.id}`);
+
     // Notify all clients via WebSocket (real-time update)
     try {
       const rawUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
