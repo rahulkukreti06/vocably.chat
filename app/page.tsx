@@ -56,6 +56,7 @@ function useMediaQuery(query: string) {
 
 export default function Page() {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   // const [showProfileModal, setShowProfileModal] = useState(false);
   // Handler to navigate to the new profile page for the current user
   const handleProfileClick = () => {
@@ -88,6 +89,22 @@ export default function Page() {
   const participantCounts = useLiveParticipantCounts(rooms);
   const isMobile = useMediaQuery('(max-width: 640px)');
   const { data: session } = useSession();
+
+  // Show WhatsApp modal after 30 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Check if we've shown the modal today
+      const lastShown = localStorage?.getItem('whatsappModalLastShown');
+      const today = new Date().toDateString();
+      
+      if (!lastShown || lastShown !== today) {
+        setShowWhatsAppModal(true);
+        localStorage?.setItem('whatsappModalLastShown', today);
+      }
+    }, 30000); // 30 seconds delay
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // Custom error modal for sign-in required
   const [showSignInError, setShowSignInError] = useState(false);
@@ -458,22 +475,23 @@ export default function Page() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [mobileProfileMenuOpen]);
 
-  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
-
+  // Show WhatsApp modal after 30 seconds
   useEffect(() => {
-    // Show only once per day
-    const lastShown = localStorage.getItem('whatsappCommunityModalLastShown');
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-    if (lastShown !== today) {
-      setShowWhatsAppModal(true);
-      localStorage.setItem('whatsappCommunityModalLastShown', today);
-    }
+    const timer = setTimeout(() => {
+      const lastShown = localStorage.getItem('whatsappModalLastShown');
+      const today = new Date().toDateString();
+      
+      if (!lastShown || lastShown !== today) {
+        setShowWhatsAppModal(true);
+        localStorage.setItem('whatsappModalLastShown', today);
+      }
+    }, 30000); // 30 seconds delay
+
+    return () => clearTimeout(timer);
   }, []);
 
   return (
     <>
-      {/* WhatsApp Community Modal */}
-      <WhatsAppCommunityModal isOpen={showWhatsAppModal} onClose={() => setShowWhatsAppModal(false)} />
       <Header
         onCreateRoomClick={() => setShowCreateModal(true)}
         onProfileClick={handleProfileClick}
@@ -1101,6 +1119,10 @@ export default function Page() {
         </div>
       )}
       <ScrollToTopBottomButton />
+      <WhatsAppCommunityModal 
+        isOpen={showWhatsAppModal}
+        onClose={() => setShowWhatsAppModal(false)}
+      />
     </>
   );
 }
