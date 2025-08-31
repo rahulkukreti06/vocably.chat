@@ -18,6 +18,7 @@ import { useSession, signIn, signOut } from 'next-auth/react';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { ChevronDown } from "lucide-react";
 import dynamic from 'next/dynamic';
+import { WhatsAppCommunityModal } from '../components/WhatsAppCommunityModal';
 
 const ScrollToTopBottomButton = dynamic(() => import('../components/ScrollToTopBottomButton'), { ssr: false });
 
@@ -404,7 +405,7 @@ export default function Page() {
     setShowCreateModal(false);
     setRooms(prevRooms => [newRoom, ...prevRooms]);
 
-     // Instantly join the newly created room
+    // Instantly join the newly created room
     router.push(`/rooms/${newRoom.id}`);
 
     // Notify all clients via WebSocket (real-time update)
@@ -457,8 +458,22 @@ export default function Page() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [mobileProfileMenuOpen]);
 
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+
+  useEffect(() => {
+    // Show only once per day
+    const lastShown = localStorage.getItem('whatsappCommunityModalLastShown');
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    if (lastShown !== today) {
+      setShowWhatsAppModal(true);
+      localStorage.setItem('whatsappCommunityModalLastShown', today);
+    }
+  }, []);
+
   return (
     <>
+      {/* WhatsApp Community Modal */}
+      <WhatsAppCommunityModal isOpen={showWhatsAppModal} onClose={() => setShowWhatsAppModal(false)} />
       <Header
         onCreateRoomClick={() => setShowCreateModal(true)}
         onProfileClick={handleProfileClick}
@@ -532,7 +547,33 @@ export default function Page() {
               >
                 + Create Room
               </button>
-             
+              <a
+                href="https://www.buymeacoffee.com/rahulkukreti06"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textDecoration: 'none',
+                  height: '40px',
+                  minWidth: '140px',
+                  width: 'auto',
+                  flexShrink: 0,
+                }}
+              >
+                <img 
+                  src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" 
+                  alt="Buy Me A Coffee" 
+                  style={{ 
+                    height: '100%',
+                    width: '100%',
+                    objectFit: 'contain',
+                    borderRadius: '12px',
+                    display: 'block'
+                  }} 
+                />
+              </a>
             </div>
           </div>
         ) : (
@@ -738,7 +779,7 @@ export default function Page() {
                     }}
                     aria-label="Reddit community for suggestions, bugs & reports"
                   >
-                   <FaReddit size={18} style={{ flexShrink: 0, marginRight: 8, color: '#FF4500' }} />
+                    <FaReddit size={18} style={{ flexShrink: 0, marginRight: 8, color: '#FF4500' }} />
                     <div style={{ position: 'relative', flex: 1, height: '100%', display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
                       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
                         <div style={{position:'absolute',left:0,top:0,bottom:0,width:20,background:'linear-gradient(90deg,#000,rgba(0,0,0,0))'}} />
@@ -921,7 +962,7 @@ export default function Page() {
                     }}
                     aria-label="Reddit community for suggestions, bugs & reports"
                   >
-                   <FaReddit size={18} style={{ flexShrink: 0, marginRight: 4, color: '#FF4500' }} />
+                    <FaReddit size={18} style={{ flexShrink: 0, marginRight: 4, color: '#FF4500' }} />
                     <div style={{ position: 'relative', flex: 1, height: '100%', display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
                       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
                         <div style={{position:'absolute',left:0,top:0,bottom:0,width:14,background:'linear-gradient(90deg,#000,rgba(0,0,0,0))'}} />
