@@ -22,6 +22,7 @@ import dynamic from 'next/dynamic';
 import { WhatsAppCommunityModal } from '../components/WhatsAppCommunityModal';
 
 const ScrollToTopBottomButton = dynamic(() => import('../components/ScrollToTopBottomButton'), { ssr: false });
+const DeepSeekChatbot = dynamic(() => import('../components/DeepSeekChatbot'), { ssr: false });
 
 interface Room {
   id: string;
@@ -355,14 +356,14 @@ export default function Page() {
     maxParticipants: number;
     topic?: string;
     tags: string[];
-  }) => {
+  }): Promise<boolean> => {
     if (!session || !session.user) {
       showSignInModal('You must be signed in to create a room. Please sign in with your Google account to continue.');
-      return;
+      return false;
     }
     if (!session.user.id) {
       showSignInModal('You must be signed in to create a room. Please sign in with your Google account to continue.');
-      return;
+      return false;
     }
     // Use only a real UUID for created_by
     let created_by = String(session.user.id).trim();
@@ -390,7 +391,7 @@ export default function Page() {
     // Final fallback for created_by (should always be a UUID or a valid provider user ID)
     if (!newRoom.created_by || typeof newRoom.created_by !== 'string' || newRoom.created_by.length < 6) {
       showSignInModal('You must be signed in with a valid account to create a room. Please sign in with your Google account to continue.');
-      return;
+      return false;
     }
     console.log('Final newRoom object before insert:', newRoom);
     // Debug: log the newRoom object and created_by before inserting
