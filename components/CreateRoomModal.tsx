@@ -64,6 +64,7 @@ const customStyles = {
 interface CreateRoomModalProps {
   isOpen: boolean;
   onClose: () => void;
+  // onCreateRoom should return a Promise<boolean> indicating success (true) or failure (false)
   onCreateRoom: (roomData: {
     name: string;
     language: string;
@@ -73,7 +74,7 @@ interface CreateRoomModalProps {
     maxParticipants: number;
     topic?: string;
     tags: string[];
-  }) => void;
+  }) => Promise<boolean>;
 }
 
 const languages = [
@@ -122,33 +123,46 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
 
   if (!isOpen && !isMounted) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
       toast.error('Please enter a room name');
       return;
     }
 
-    onCreateRoom({
-      name,
-      language: selectedLanguage,
-      language_level: selectedLevel.toLowerCase() as 'beginner' | 'intermediate' | 'advanced',
-      isPublic,
-      password: isPublic ? undefined : password,
-      maxParticipants,
-      topic,
-      tags,
-    });
-    // Reset all fields after creating a room
-    setName('');
-    setSelectedLanguage(languages[0]);
-    setSelectedLevel(levels[0]);
-    setIsPublic(true);
-    setPassword('');
-    setMaxParticipants(10);
-    setTopic('');
-    setTags([]);
-    setNewTag('');
+    // Await the result from parent handler. It should return true on success.
+    try {
+      const success = await onCreateRoom({
+        name,
+        language: selectedLanguage,
+        language_level: selectedLevel.toLowerCase() as 'beginner' | 'intermediate' | 'advanced',
+        isPublic,
+        password: isPublic ? undefined : password,
+        maxParticipants,
+        topic,
+        tags,
+      });
+
+      if (!success) {
+        // Parent reported failure (e.g. duplicate name). Don't reset the form so user can adjust.
+        return;
+      }
+
+      // Reset all fields after successful creation
+      setName('');
+      setSelectedLanguage(languages[0]);
+      setSelectedLevel(levels[0]);
+      setIsPublic(true);
+      setPassword('');
+      setMaxParticipants(10);
+      setTopic('');
+      setTags([]);
+      setNewTag('');
+    } catch (err) {
+      // If parent throws, show a toast and keep the form state
+      toast.error('Failed to create room. Please try again.');
+      console.error('CreateRoomModal: onCreateRoom threw an error', err);
+    }
   }
 
   const addTag = () => {
