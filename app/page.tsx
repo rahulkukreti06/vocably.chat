@@ -22,7 +22,7 @@ import dynamic from 'next/dynamic';
 import { WhatsAppCommunityModal } from '../components/WhatsAppCommunityModal';
 
 const ScrollToTopBottomButton = dynamic(() => import('../components/ScrollToTopBottomButton'), { ssr: false });
-const DeepSeekChatbot = dynamic(() => import('../components/DeepSeekChatbot'), { ssr: false });
+
 
 interface Room {
   id: string;
