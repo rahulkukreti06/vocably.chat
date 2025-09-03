@@ -34,7 +34,10 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [reporting, setReporting] = useState(false);
+  const [topicHover, setTopicHover] = useState(false);
+  const [topicClicked, setTopicClicked] = useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
+  const topicRef = React.useRef<HTMLSpanElement | null>(null);
 
   // Removed debug console.log for production
 
@@ -54,6 +57,21 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [menuOpen]);
+
+  // Close topic tooltip when clicking outside
+  React.useEffect(() => {
+    function handleDocClick(e: MouseEvent) {
+      const target = e.target as Node;
+      if (topicClicked) {
+        if (topicRef.current && !topicRef.current.contains(target)) {
+          setTopicClicked(false);
+          setTopicHover(false);
+        }
+      }
+    }
+    document.addEventListener('mousedown', handleDocClick);
+    return () => document.removeEventListener('mousedown', handleDocClick);
+  }, [topicClicked]);
 
   // Helper to get reporterId
   const getReporterId = () => {
@@ -165,20 +183,72 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
           >
             {room.name}
           </div>
-          <div style={{ color: '#bdbdbd', fontSize: 14, marginBottom: 8 }}>
-            <span
-              style={{ cursor: 'pointer' }}
-              title={room.created_by_name || room.created_by}
-              onClick={e => {
-                const target = e.currentTarget;
-                target.innerText = room.created_by_name || room.created_by;
-                setTimeout(() => {
-                  target.innerText = (room.created_by_name || room.created_by).split(' ')[0];
-                }, 2000);
-              }}
-            >
-              {(room.created_by_name || room.created_by).split(' ')[0]}
-            </span> &bull; {room.topic && room.topic.trim() !== '' ? room.topic : 'General Discussion'}
+          <div style={{ color: '#bdbdbd', fontSize: 14, marginBottom: 8, position: 'relative' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', minWidth: 0, maxWidth: '100%' }}>
+              <span
+                style={{ cursor: 'pointer', flex: '0 0 auto' }}
+                title={room.created_by_name || room.created_by}
+                onClick={e => {
+                  const target = e.currentTarget;
+                  target.innerText = room.created_by_name || room.created_by;
+                  setTimeout(() => {
+                    target.innerText = (room.created_by_name || room.created_by).split(' ')[0];
+                  }, 2000);
+                }}
+              >
+                {(room.created_by_name || room.created_by).split(' ')[0]}
+              </span>
+              <span style={{ margin: '0 2px', color: '#bdbdbd', flex: '0 0 auto' }}>&bull;</span>
+              {
+                (() => {
+                  const fullTopic = room.topic && room.topic.trim() !== '' ? room.topic.trim() : 'General Discussion';
+                  const words = fullTopic.split(/\s+/);
+                  const maxWords = 6;
+                  const shouldTruncate = words.length > maxWords;
+                  const displayTopic = shouldTruncate ? words.slice(0, maxWords).join(' ') + '...' : fullTopic;
+                  return (
+                    <span ref={topicRef} style={{ position: 'relative', display: 'inline-flex', flex: '1 1 auto', minWidth: 0 }}>
+                      <span
+                        onMouseEnter={() => setTopicHover(true)}
+                        onMouseLeave={() => setTopicHover(false)}
+                        onClick={() => setTopicClicked(v => !v)}
+                        style={{ cursor: shouldTruncate ? 'pointer' : 'default', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', minWidth: 0 }}
+                        aria-label={shouldTruncate ? 'Show full topic' : 'Topic'}
+                      >
+                        {displayTopic}
+                      </span>
+                      {(topicHover || topicClicked) && shouldTruncate && (
+                        <div
+                          role="tooltip"
+                          style={{
+                            position: 'absolute',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            top: -44,
+                            minWidth: 260,
+                            maxWidth: 640,
+                            background: '#ffffff',
+                            color: '#0b1220',
+                            padding: '8px 12px',
+                            borderRadius: 8,
+                            border: '1px solid #e5e7eb',
+                            boxShadow: '0 6px 20px rgba(2,6,23,0.08)',
+                            zIndex: 40,
+                            fontSize: 13,
+                            textAlign: 'center',
+                            pointerEvents: 'auto'
+                          }}
+                          onMouseEnter={() => setTopicHover(true)}
+                          onMouseLeave={() => setTopicHover(false)}
+                        >
+                          {fullTopic}
+                        </div>
+                      )}
+                    </span>
+                  );
+                })()
+              }
+            </span>
           </div>
           <div className="badge-container" style={{ display: 'flex', gap: 7, marginBottom: 6 }}>
             <span className={styles['room-card__badge']} style={{ background: '#ffd70022', color: '#ffd700', borderRadius: 7, padding: '2.5px 10px', fontSize: 13, fontWeight: 600 }}>
