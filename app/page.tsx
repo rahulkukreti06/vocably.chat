@@ -15,12 +15,14 @@ import { useLiveParticipantCounts } from '../hooks/useLiveParticipantCounts';
 import BuyMeCoffee from '../components/BuyMeCoffee';
 import { supabase } from '@/lib/supabaseClient';
 import { useSession, signIn, signOut } from 'next-auth/react';
+import { toast } from 'react-hot-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { ChevronDown } from "lucide-react";
 import dynamic from 'next/dynamic';
 import { WhatsAppCommunityModal } from '../components/WhatsAppCommunityModal';
 
 const ScrollToTopBottomButton = dynamic(() => import('../components/ScrollToTopBottomButton'), { ssr: false });
+const DeepSeekChatbot = dynamic(() => import('../components/DeepSeekChatbot'), { ssr: false });
 
 interface Room {
   id: string;
@@ -413,11 +415,38 @@ export default function Page() {
       topic: newRoom.topic, // <-- ensure topic is included
     };
     console.log('DEBUG: Minimal insert payload:', minimalRoom);
+
+    // Stricter duplicate check: fetch existing room names and compare a normalized form
+    // (trim, collapse whitespace, lowercase) to avoid accidental collisions like
+    // extra spaces or different casing.
+    try {
+      const { data: existingRooms, error: fetchErr } = await supabase
+        .from('rooms')
+        .select('id, name');
+      if (fetchErr) {
+        console.error('Failed to fetch rooms for duplicate check:', fetchErr);
+      } else if (existingRooms) {
+        const normalize = (s: any) => String(s || '')
+          .trim()
+          .replace(/\s+/g, ' ')
+          .toLowerCase();
+        const target = normalize(roomData.name);
+        const found = existingRooms.some((r: any) => normalize(r.name) === target);
+        if (found) {
+          toast.error('Room name already taken. Please choose a different name.');
+          return false;
+        }
+      }
+    } catch (err) {
+      console.error('Error checking for duplicate room name:', err);
+      // If the check fails for any reason, allow the insert to proceed and surface DB errors.
+    }
+
     const { data, error } = await supabase.from('rooms').insert([minimalRoom]);
     console.log('Supabase insert result:', { data, error });
     if (error) {
       alert('Failed to create room: ' + error.message + '\n' + JSON.stringify(error, null, 2));
-      return;
+      return false;
     }
     setShowCreateModal(false);
     setRooms(prevRooms => [newRoom, ...prevRooms]);
@@ -425,7 +454,7 @@ export default function Page() {
     // Instantly join the newly created room
     router.push(`/rooms/${newRoom.id}`);
 
-    // Notify all clients via WebSocket (real-time update)
+  // Notify all clients via WebSocket (real-time update)
     try {
       const rawUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
       const wsUrl = rawUrl.replace(/\/+$/, '');
@@ -437,6 +466,8 @@ export default function Page() {
     } catch (e) {
       console.error('Failed to notify WebSocket server about new room:', e);
     }
+
+    return true;
   };
 
   // Merge real participant counts into rooms for display
@@ -1118,7 +1149,9 @@ export default function Page() {
           </div>
         </div>
       )}
-      <ScrollToTopBottomButton />
+  {/* DeepSeek chatbot widget (fixed, appears above the scroll FAB) */}
+  <DeepSeekChatbot />
+  <ScrollToTopBottomButton />
       <WhatsAppCommunityModal 
         isOpen={showWhatsAppModal}
         onClose={() => setShowWhatsAppModal(false)}
