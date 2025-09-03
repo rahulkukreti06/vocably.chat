@@ -135,7 +135,7 @@ export const RoomList: React.FC<RoomListProps> = ({
             <RoomCard
               key={room.id}
               room={room}
-              liveParticipantCount={participantCounts[room.id] || 0}
+              liveParticipantCount={participantCounts[room.id] ?? room.participants}
               onJoin={onJoinRoom}
               onRemoveRoom={undefined}
               onParticipantUpdate={onParticipantUpdate}
