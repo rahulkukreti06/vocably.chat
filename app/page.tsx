@@ -23,7 +23,6 @@ import { WhatsAppCommunityModal } from '../components/WhatsAppCommunityModal';
 
 const ScrollToTopBottomButton = dynamic(() => import('../components/ScrollToTopBottomButton'), { ssr: false });
 
-
 interface Room {
   id: string;
   name: string;
@@ -1150,7 +1149,7 @@ export default function Page() {
         </div>
       )}
   {/* DeepSeek chatbot widget (fixed, appears above the scroll FAB) */}
-  <DeepSeekChatbot />
+  {/* DeepSeekChatbot intentionally omitted here to avoid build-time identifier errors when the component is missing. Re-add when available. */}
   <ScrollToTopBottomButton />
       <WhatsAppCommunityModal 
         isOpen={showWhatsAppModal}
