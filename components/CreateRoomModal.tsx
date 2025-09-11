@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaGlobe, FaLock, FaTag, FaUsers, FaFont, FaLanguage, FaComments, FaPlus, FaMinus, FaHashtag, FaArrowUp, FaArrowDown, FaChartLine, FaPencilAlt, FaTags, FaTimes } from 'react-icons/fa';
+import { FaGlobe, FaLock, FaTag, FaUsers, FaFont, FaLanguage, FaComments, FaPlus, FaMinus, FaHashtag, FaArrowUp, FaArrowDown, FaChartLine, FaPencilAlt, FaTags, FaTimes, FaClock } from 'react-icons/fa';
 import { X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Select from 'react-select';
@@ -70,10 +70,12 @@ interface CreateRoomModalProps {
     language: string;
     language_level: 'beginner' | 'intermediate' | 'advanced';
     isPublic: boolean;
-    password?: string;
+  password?: string;
     maxParticipants: number;
     topic?: string;
     tags: string[];
+  // optional expiry in minutes; if provided the room will auto-expire after this many minutes
+  expiresAfterMinutes?: number | null;
   }) => Promise<boolean>;
 }
 
@@ -104,6 +106,8 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   const [topic, setTopic] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
+  const [expiresAfterMinutes, setExpiresAfterMinutes] = useState<number | null>(null);
+  const [customExpiryMinutes, setCustomExpiryMinutes] = useState<number>(60); // default 60 minutes
 
   const [isMounted, setIsMounted] = useState(false);
 
@@ -141,6 +145,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         maxParticipants,
         topic,
         tags,
+  expiresAfterMinutes: expiresAfterMinutes === -1 ? customExpiryMinutes : expiresAfterMinutes,
       });
 
       if (!success) {
@@ -158,6 +163,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       setTopic('');
       setTags([]);
       setNewTag('');
+  setExpiresAfterMinutes(null);
     } catch (err) {
       // If parent throws, show a toast and keep the form state
       toast.error('Failed to create room. Please try again.');
@@ -304,6 +310,40 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                 e.target.style.boxShadow = 'none';
               }}
             />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <FaClock style={{ color: '#f59e0b', fontSize: '0.9rem' }} />
+              <label style={{ fontSize: '0.9rem', fontWeight: 500, color: 'rgba(255, 255, 255, 0.9)' }}>Auto-expire</label>
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <select value={expiresAfterMinutes ?? ''} onChange={e => setExpiresAfterMinutes(e.target.value === '' ? null : Number(e.target.value))}
+                style={{ padding: '0.5rem', borderRadius: 8, background: 'rgba(30,32,40,0.8)', color: '#fff', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <option value="">Never</option>
+                <option value="15">15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="60">1 hour</option>
+                <option value="120">2 hours</option>
+                <option value="360">6 hours</option>
+                <option value="720">12 hours</option>
+                <option value="-1">Custom...</option>
+              </select>
+              {expiresAfterMinutes === -1 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="number"
+                    min={1}
+                    max={720}
+                    value={customExpiryMinutes}
+                    onChange={e => setCustomExpiryMinutes(Math.max(1, Math.min(720, Number(e.target.value || 0))))}
+                    style={{ width: 120, padding: '0.5rem', borderRadius: 8, background: 'rgba(30,32,40,0.8)', color: '#fff', border: '1px solid rgba(255,255,255,0.06)' }}
+                  />
+                  <span style={{ color: '#bdbdbd', fontSize: 13 }}>minutes (max 720 = 12 hours)</span>
+                </div>
+              )}
+              <span style={{ color: '#bdbdbd', fontSize: 13 }}>When set, the room will be removed automatically after the selected time.</span>
+            </div>
           </div>
 
           <div>
