@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaUser, FaLock, FaGlobe, FaEllipsisV, FaFlag } from 'react-icons/fa';
 import styles from '../styles/RoomCard.module.css';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -19,6 +19,7 @@ interface RoomCardProps {
     created_by_image?: string | null; // Add for Google profile image
     topic?: string;
     tags?: string[];
+  expires_at?: string | null;
   };
   onJoin: (room: any) => void;
   onRemoveRoom?: (roomId: string) => void;
@@ -33,6 +34,10 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
   const isFull = participantCount >= room.max_participants;
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [now, setNow] = useState(Date.now());
+  const [expired, setExpired] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showCreatedFull, setShowCreatedFull] = useState(false);
   const [reporting, setReporting] = useState(false);
   const [topicHover, setTopicHover] = useState(false);
   const [topicClicked, setTopicClicked] = useState(false);
@@ -43,6 +48,12 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
 
   // Close menu when clicking outside
   React.useEffect(() => {
+    let interval: any;
+    if (room.expires_at) {
+      interval = setInterval(() => setNow(Date.now()), 1000);
+      const expiresAt = new Date(room.expires_at).getTime();
+      if (Date.now() >= expiresAt) setExpired(true);
+    }
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMenuOpen(false);
@@ -55,8 +66,23 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+  if (interval) clearInterval(interval);
     };
   }, [menuOpen]);
+
+  // Detect small screens so we can change tap behavior on mobile
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 640px)');
+    const update = () => setIsMobile(!!mq.matches);
+    update();
+    if (mq.addEventListener) mq.addEventListener('change', update);
+    else mq.addListener(update);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', update);
+      else mq.removeListener(update);
+    };
+  }, []);
 
   // Close topic tooltip when clicking outside
   React.useEffect(() => {
@@ -72,6 +98,22 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
     document.addEventListener('mousedown', handleDocClick);
     return () => document.removeEventListener('mousedown', handleDocClick);
   }, [topicClicked]);
+
+  // Auto-remove when expired: call onRemoveRoom if provided and mark expired
+  React.useEffect(() => {
+    if (!room.expires_at) return;
+    const expiresAt = new Date(room.expires_at).getTime();
+    if (Date.now() >= expiresAt) {
+      setExpired(true);
+      if (onRemoveRoom) onRemoveRoom(room.id);
+      return;
+    }
+    const to = setTimeout(() => {
+      setExpired(true);
+      if (onRemoveRoom) onRemoveRoom(room.id);
+    }, expiresAt - Date.now());
+    return () => clearTimeout(to);
+  }, [room.expires_at, onRemoveRoom, room.id]);
 
   // Helper to get reporterId
   const getReporterId = () => {
@@ -189,6 +231,12 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
                 style={{ cursor: 'pointer', flex: '0 0 auto' }}
                 title={room.created_by_name || room.created_by}
                 onClick={e => {
+                  // On mobile, show the full created timestamp and temporarily hide expiry
+                  if (isMobile) {
+                    setShowCreatedFull(true);
+                    setTimeout(() => setShowCreatedFull(false), 1000);
+                    return;
+                  }
                   const target = e.currentTarget;
                   target.innerText = room.created_by_name || room.created_by;
                   setTimeout(() => {
@@ -198,7 +246,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
               >
                 {(room.created_by_name || room.created_by).split(' ')[0]}
               </span>
-              <span style={{ margin: '0 2px', color: '#bdbdbd', flex: '0 0 auto' }}>&bull;</span>
+              <span style={{ margin: '0 1px', color: '#bdbdbd', flex: '0 0 auto' }}>&bull;</span>
               {
                 (() => {
                   const fullTopic = room.topic && room.topic.trim() !== '' ? room.topic.trim() : 'General Discussion';
@@ -261,7 +309,51 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
               {room.is_public ? <FaGlobe style={{ marginRight: 4 }} /> : <FaLock style={{ marginRight: 4 }} />} {room.is_public ? 'Public' : 'Private'}
             </span>
           </div>
-          <div style={{ color: '#bdbdbd', fontSize: 13, marginBottom: 8 }}>Created {new Date(room.created_at).toLocaleString()}</div>
+        
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 6, color: '#bdbdbd', fontSize: 13, marginBottom: 8, flexWrap: 'nowrap' }}>
+            <span
+              style={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                display: 'block',
+                // On mobile allow the span to grow; on desktop prevent it from taking remaining space so Expires stays close
+                flex: isMobile ? '1 1 auto' : '0 1 auto',
+                minWidth: 0,
+                maxWidth: isMobile ? '100%' : '70%',
+                cursor: isMobile ? 'pointer' : 'default'
+              }}
+              onClick={() => {
+                if (!isMobile) return;
+                setShowCreatedFull(true);
+                setTimeout(() => setShowCreatedFull(false), 1000);
+              }}
+            >
+              {
+                (() => {
+                  const createdDate = new Date(room.created_at);
+                  const full = createdDate.toLocaleString();
+                  const short = createdDate.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+                  return `Created ${showCreatedFull ? full : short}`;
+                })()
+              }
+            </span>
+            {room.expires_at && !expired && !showCreatedFull && (
+              (() => {
+                const diff = Math.max(0, new Date(room.expires_at).getTime() - now);
+                const mins = Math.floor(diff / 60000);
+                const secs = Math.floor((diff % 60000) / 1000);
+                return (
+                  <span style={{ color: '#ffcc66', fontSize: 13, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap' }} title={`Expires at ${new Date(room.expires_at).toLocaleString()}`}>
+                    • Expires in {mins}m {secs}s
+                  </span>
+                );
+              })()
+            )}
+            {room.expires_at && expired && (
+              <span style={{ color: '#ff6b6b', fontSize: 13, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap' }}>• Expired</span>
+            )}
+          </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: 70 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
