@@ -38,6 +38,7 @@ interface Room {
   created_by_image?: string | null; // Add this for Google profile image
   topic?: string;
   tags?: string[];
+  expires_at?: string | null;
 }
 
 // Custom hook for media query
@@ -355,6 +356,7 @@ export default function Page() {
     maxParticipants: number;
     topic?: string;
     tags: string[];
+  expiresAfterMinutes?: number | null;
   }): Promise<boolean> => {
     if (!session || !session.user) {
       showSignInModal('You must be signed in to create a room. Please sign in with your Google account to continue.');
@@ -382,6 +384,8 @@ export default function Page() {
       created_by_image: session.user.image || null, // store Google image
       topic: roomData.topic ?? '',       // default to empty string
       tags: roomData.tags ?? [],         // default to empty array
+      // If expiresAfterMinutes was provided, compute ISO expiry timestamp
+      expires_at: roomData.expiresAfterMinutes ? new Date(Date.now() + roomData.expiresAfterMinutes * 60000).toISOString() : null,
     };
     // Debug: log the newRoom object before inserting
     console.log('Creating new room:', newRoom);
@@ -412,6 +416,7 @@ export default function Page() {
       created_by_name: newRoom.created_by_name,
       created_by_image: newRoom.created_by_image, // include image
       topic: newRoom.topic, // <-- ensure topic is included
+  expires_at: newRoom.expires_at, // optional expiry
     };
     console.log('DEBUG: Minimal insert payload:', minimalRoom);
 
@@ -450,6 +455,25 @@ export default function Page() {
     setShowCreateModal(false);
     setRooms(prevRooms => [newRoom, ...prevRooms]);
 
+    // If expires_at is set, schedule client-side removal when the time arrives
+    if (newRoom.expires_at) {
+      const expiresAt = new Date(newRoom.expires_at).getTime();
+      const now = Date.now();
+      const delay = Math.max(0, expiresAt - now);
+      setTimeout(async () => {
+        try {
+          // attempt to delete from Supabase and then remove locally
+          const { error: delErr } = await supabase.from('rooms').delete().eq('id', newRoom.id);
+          if (delErr) {
+            console.error('Failed to delete expired room from DB', delErr);
+          }
+        } catch (e) {
+          console.error('Error deleting expired room:', e);
+        }
+        setRooms(prev => prev.filter(r => r.id !== newRoom.id));
+      }, delay);
+    }
+
     // Instantly join the newly created room
     router.push(`/rooms/${newRoom.id}`);
 
@@ -478,6 +502,17 @@ export default function Page() {
     created_by_name: room.created_by_name || '', // always a string
     created_by_image: room.created_by_image || null, // always a string or null
   }));
+
+  const handleRemoveRoom = async (roomId: string) => {
+    try {
+      // attempt to delete from DB
+      const { error } = await supabase.from('rooms').delete().eq('id', roomId);
+      if (error) console.error('Failed to delete room from DB', error);
+    } catch (e) {
+      console.error('Error deleting room:', e);
+    }
+    setRooms(prev => prev.filter(r => r.id !== roomId));
+  };
 
   // Removed debug console logs for production
 
@@ -1058,6 +1093,7 @@ export default function Page() {
               availability={availability}
               setAvailability={setAvailability}
               isJoiningMap={isJoiningMap}
+              onRemoveRoom={handleRemoveRoom}
             />
           </>
         )}
