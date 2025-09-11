@@ -26,6 +26,7 @@ interface RoomListProps {
   selectedLevel: string;
   onJoinRoom: (room: Room) => void;
   onParticipantUpdate: (roomId: string, participantCount: number) => void;
+  onRemoveRoom?: (roomId: string) => void;
   searchTerm?: string;
   showFilters: boolean;
   setShowFilters: (show: boolean) => void;
@@ -55,6 +56,7 @@ export const RoomList: React.FC<RoomListProps> = ({
   availability,
   setAvailability,
   isJoiningMap = {},
+  onRemoveRoom,
 }) => {
   // Filter rooms based on search term and filters
   const filteredRooms = rooms.filter(room => {
@@ -137,7 +139,7 @@ export const RoomList: React.FC<RoomListProps> = ({
               room={room}
               liveParticipantCount={participantCounts[room.id] ?? room.participants}
               onJoin={onJoinRoom}
-              onRemoveRoom={undefined}
+              onRemoveRoom={onRemoveRoom}
               onParticipantUpdate={onParticipantUpdate}
               isJoining={!!isJoiningMap[room.id]}
             />
