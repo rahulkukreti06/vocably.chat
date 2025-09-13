@@ -73,9 +73,10 @@ export const RoomList: React.FC<RoomListProps> = ({
       matches = matches && (roomType === 'public' ? room.is_public : !room.is_public);
     }
     if (availability !== 'all') {
+      const liveCount = participantCounts[room.id] ?? room.participants;
       matches = matches && (availability === 'available'
-        ? room.participants < room.max_participants
-        : room.participants >= room.max_participants);
+        ? liveCount < room.max_participants
+        : liveCount >= room.max_participants);
     }
     return matches;
   });
@@ -86,7 +87,9 @@ export const RoomList: React.FC<RoomListProps> = ({
     if (sortBy === 'newest') {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     } else if (sortBy === 'popular') {
-      return b.participants - a.participants;
+      const aCount = participantCounts[a.id] ?? a.participants;
+      const bCount = participantCounts[b.id] ?? b.participants;
+      return bCount - aCount;
     } else {
       return a.name.localeCompare(b.name);
     }
