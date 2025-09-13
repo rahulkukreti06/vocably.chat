@@ -496,12 +496,16 @@ export default function Page() {
   // Merge real participant counts into rooms for display
   const roomsWithRealCounts = rooms.map(room => ({
     ...room,
-    participants: typeof participantCounts[room.id] === 'number'
-      ? participantCounts[room.id]
-      : 0,
+    // Use the live count if available; otherwise keep the stored participants value
+    participants: typeof participantCounts[room.id] === 'number' ? participantCounts[room.id] : room.participants,
     created_by_name: room.created_by_name || '', // always a string
     created_by_image: room.created_by_image || null, // always a string or null
   }));
+
+  // Handle optimistic participant count updates from RoomCard
+  const handleParticipantUpdate = (roomId: string, participantCount: number) => {
+    setRooms(prev => prev.map(r => r.id === roomId ? { ...r, participants: participantCount } : r));
+  };
 
   const handleRemoveRoom = async (roomId: string) => {
     try {
@@ -1082,7 +1086,7 @@ export default function Page() {
               selectedLanguage={''}
               selectedLevel={''}
               onJoinRoom={handleJoinRoomSync}
-              onParticipantUpdate={() => {}}
+              onParticipantUpdate={handleParticipantUpdate}
               searchTerm={searchTerm}
               showFilters={showFilters}
               setShowFilters={setShowFilters}
