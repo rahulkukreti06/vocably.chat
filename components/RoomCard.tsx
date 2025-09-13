@@ -166,7 +166,9 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
     await onJoin(room);
     // Optimistically notify parent that a participant joined so UI updates immediately
     try {
-      if (onParticipantUpdate) onParticipantUpdate(room.id, (room.participants || 0) + 1);
+      // Use the liveParticipantCount when available (avoid using stale room.participants)
+      const current = typeof liveParticipantCount === 'number' ? liveParticipantCount : (room.participants || 0);
+      if (onParticipantUpdate) onParticipantUpdate(room.id, current + 1);
     } catch {}
   };
 
