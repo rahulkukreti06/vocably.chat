@@ -7,8 +7,11 @@ export function useLiveParticipantCounts(rooms: { id: string }[]) {
   const reconnectAttempts = useRef(0);
   const heartbeatInterval = useRef<NodeJS.Timeout | null>(null);
 
+  // Derive a stable list of room IDs to avoid re-running effect when callers pass new array instances
+  const roomIds = rooms ? rooms.map(r => r.id).sort() : [];
+
   useEffect(() => {
-    if (!rooms || rooms.length === 0) return;
+    if (!roomIds || roomIds.length === 0) return;
     let subscription: any;
     let ws: WebSocket | null = null;
     let pollInterval: NodeJS.Timeout | null = null;
@@ -50,7 +53,15 @@ export function useLiveParticipantCounts(rooms: { id: string }[]) {
         try {
           const data = JSON.parse(event.data);
           if (data.type === 'counts' && data.rooms) {
-            setCounts((prev) => ({ ...prev, ...data.rooms }));
+            // Sanitize incoming counts: only accept finite non-negative integers
+            const sanitized: { [k: string]: number } = {};
+            Object.keys(data.rooms).forEach(k => {
+              const v = Number(data.rooms[k]);
+              if (Number.isFinite(v) && v >= 0) sanitized[k] = Math.floor(v);
+            });
+            if (Object.keys(sanitized).length > 0) {
+              setCounts((prev) => ({ ...prev, ...sanitized }));
+            }
           }
         } catch (err) {
           // Ignore parse errors
@@ -78,9 +89,11 @@ export function useLiveParticipantCounts(rooms: { id: string }[]) {
       if (!error && data) {
         const countsObj: { [roomId: string]: number } = {};
         data.forEach((room: any) => {
-          countsObj[room.id] = room.participants;
+          const v = Number(room.participants);
+          if (Number.isFinite(v) && v >= 0) countsObj[room.id] = Math.floor(v);
         });
-        setCounts(countsObj);
+        // Only replace counts for rooms we care about; keep existing keys for others
+        setCounts(prev => ({ ...prev, ...countsObj }));
       }
     }
     fetchCounts();
@@ -101,7 +114,8 @@ export function useLiveParticipantCounts(rooms: { id: string }[]) {
       stopHeartbeat();
       if (heartbeatTimeout) clearTimeout(heartbeatTimeout);
     };
-  }, [rooms]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomIds.join(',')]);
 
   return counts;
 }
