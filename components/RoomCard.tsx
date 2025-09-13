@@ -164,6 +164,10 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
   const handleJoinClick = async () => {
     if (isJoining) return; // Prevent multiple clicks
     await onJoin(room);
+    // Optimistically notify parent that a participant joined so UI updates immediately
+    try {
+      if (onParticipantUpdate) onParticipantUpdate(room.id, (room.participants || 0) + 1);
+    } catch {}
   };
 
   return (
