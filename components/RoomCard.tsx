@@ -43,6 +43,9 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
   const [topicClicked, setTopicClicked] = useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const topicRef = React.useRef<HTMLSpanElement | null>(null);
+  const titleContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const titleInnerRef = React.useRef<HTMLDivElement | null>(null);
+  const [titleOverflow, setTitleOverflow] = useState(false);
 
   // Removed debug console.log for production
 
@@ -69,6 +72,32 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
   if (interval) clearInterval(interval);
     };
   }, [menuOpen]);
+
+  // Measure title overflow and enable marquee if needed
+  useEffect(() => {
+    function measure() {
+      const container = titleContainerRef.current;
+      const inner = titleInnerRef.current;
+      if (!container || !inner) return setTitleOverflow(false);
+      const overflowAmount = inner.scrollWidth - container.clientWidth;
+      if (overflowAmount > 2) {
+        // set CSS variables for animation distance and duration
+        inner.style.setProperty('--marquee-offset', `${overflowAmount}px`);
+        const duration = Math.max(6, Math.min(25, overflowAmount / 30));
+        inner.style.setProperty('--marquee-duration', `${duration}s`);
+        setTitleOverflow(true);
+      } else {
+        setTitleOverflow(false);
+        inner.style.removeProperty('--marquee-offset');
+        inner.style.removeProperty('--marquee-duration');
+      }
+    }
+    measure();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', measure);
+      return () => window.removeEventListener('resize', measure);
+    }
+  }, [room.name]);
 
   // Detect small screens so we can change tap behavior on mobile
   useEffect(() => {
@@ -226,10 +255,16 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
           )}
         </div>
         <div style={{ flex: 1 }}>
-          <div
-            style={{ fontWeight: 700, fontSize: 20, color: '#fff', marginBottom: 2 }}
-          >
-            {room.name}
+          <div className={styles['room-card__title-container']} ref={titleContainerRef} style={{ marginBottom: 2 }}>
+            <div
+              ref={titleInnerRef}
+              className={`${styles['room-card__title-inner']} ${titleOverflow ? styles['titleMarquee'] : ''}`}
+              style={{ fontWeight: 700, fontSize: 20, color: '#fff' }}
+              aria-label={room.name}
+              title={room.name}
+            >
+              {room.name}
+            </div>
           </div>
           <div style={{ color: '#bdbdbd', fontSize: 14, marginBottom: 8, position: 'relative' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', minWidth: 0, maxWidth: '100%' }}>
