@@ -62,6 +62,32 @@
   box-shadow: 0 4px 24px #10b98133;
 }
 
+/* Title single-line and marquee */
+.room-card__title-container {
+  overflow: hidden;
+  white-space: nowrap;
+  display: block;
+  width: 100%;
+}
+
+.room-card__title-inner {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.titleMarquee {
+  /* use a module-scoped, unique keyframe name to avoid collisions during HMR */
+  animation: RoomCard_marquee_anim var(--marquee-duration, 8s) linear infinite;
+}
+
+@keyframes RoomCard_marquee_anim {
+  0% { transform: translateX(0); }
+  10% { transform: translateX(0); }
+  90% { transform: translateX(calc(-1 * var(--marquee-offset, 0px))); }
+  100% { transform: translateX(calc(-1 * var(--marquee-offset, 0px))); }
+}
+
 @media (max-width: 500px) {
   .room-card {
     padding: 1rem 0.5rem 1rem 0.5rem;
