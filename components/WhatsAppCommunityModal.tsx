@@ -35,7 +35,7 @@ export const WhatsAppCommunityModal: React.FC<WhatsAppCommunityModalProps> = ({ 
         <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '1rem', color: '#25D366' }}>Join Our WhatsApp Community!</h2>
         <p style={{ fontSize: '1.1rem', marginBottom: '1.5rem', color: 'rgb(247 240 240)' }}>
           Get announcements and a chance to get <b>premium membership</b>!<br />
-          Only for the <b>first 100 members</b> (some spots already taken).
+          Only for the <b>first 100 members</b> (few spots remaining).
         </p>
         <a
           href={WHATSAPP_LINK}
@@ -78,3 +78,4 @@ export const WhatsAppCommunityModal: React.FC<WhatsAppCommunityModalProps> = ({ 
     </div>
   );
 };
+
