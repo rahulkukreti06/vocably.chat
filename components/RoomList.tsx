@@ -17,6 +17,8 @@ interface Room {
   created_by_image?: string | null; // Add for Google profile image
   topic?: string;
   tags?: string[];
+  expires_at?: string | null;
+  scheduled_at?: string | null;
 }
 
 interface RoomListProps {
