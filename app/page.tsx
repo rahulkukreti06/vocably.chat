@@ -39,6 +39,7 @@ interface Room {
   topic?: string;
   tags?: string[];
   expires_at?: string | null;
+  scheduled_at?: string | null;
 }
 
 // Custom hook for media query
