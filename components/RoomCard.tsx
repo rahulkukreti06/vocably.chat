@@ -20,6 +20,7 @@ interface RoomCardProps {
     topic?: string;
     tags?: string[];
   expires_at?: string | null;
+  scheduled_at?: string | null;
   };
   onJoin: (room: any) => void;
   onRemoveRoom?: (roomId: string) => void;
@@ -36,6 +37,8 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
   const [menuOpen, setMenuOpen] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [expired, setExpired] = useState(false);
+  const [startsAt, setStartsAt] = useState<number | null>(null);
+  const [notStarted, setNotStarted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showCreatedFull, setShowCreatedFull] = useState(false);
   const [reporting, setReporting] = useState(false);
@@ -56,6 +59,16 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
       interval = setInterval(() => setNow(Date.now()), 1000);
       const expiresAt = new Date(room.expires_at).getTime();
       if (Date.now() >= expiresAt) setExpired(true);
+    }
+    // scheduled start handling
+    if (room['scheduled_at']) {
+      try {
+        const s = new Date(room['scheduled_at']).getTime();
+        setStartsAt(s);
+        if (Date.now() < s) setNotStarted(true);
+        // ensure we tick every second for countdown
+        if (!interval) interval = setInterval(() => setNow(Date.now()), 1000);
+      } catch {}
     }
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -144,6 +157,20 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
     return () => clearTimeout(to);
   }, [room.expires_at, onRemoveRoom, room.id]);
 
+  // Monitor scheduled start to flip notStarted when time arrives
+  useEffect(() => {
+    if (!room['scheduled_at']) {
+      setNotStarted(false);
+      setStartsAt(null);
+      return;
+    }
+    const s = new Date(room['scheduled_at']).getTime();
+    setStartsAt(s);
+    if (Date.now() < s) setNotStarted(true);
+    const to = setTimeout(() => setNotStarted(false), Math.max(0, s - Date.now()));
+    return () => clearTimeout(to);
+  }, [room['scheduled_at']]);
+
   // Helper to get reporterId
   const getReporterId = () => {
     // Use session user name if available, fallback to localStorage, then 'Anonymous'
@@ -192,6 +219,11 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
 
   const handleJoinClick = async () => {
     if (isJoining) return; // Prevent multiple clicks
+    if (notStarted) {
+      // optionally show an alert/toast here; keep simple alert to avoid adding dependencies
+      alert('This room is scheduled to start later. You can join once it starts.');
+      return;
+    }
     await onJoin(room);
     // Optimistically notify parent that a participant joined so UI updates immediately
     try {
@@ -202,6 +234,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
   };
 
   return (
+    <>
     <div className={styles['room-card'] + ' room-card'} tabIndex={0} aria-label={`Room card for ${room.name}`} role="region" style={{ position: 'relative' }}>
       {/* Three-dot menu in top right */}
       <div ref={menuRef} style={{ position: 'absolute', top: 12, right: 16, zIndex: 2 }}>
@@ -352,47 +385,85 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
           </div>
         
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 6, color: '#bdbdbd', fontSize: 13, marginBottom: 8, flexWrap: 'nowrap' }}>
-            <span
-              style={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                display: 'block',
-                // On mobile allow the span to grow; on desktop prevent it from taking remaining space so Expires stays close
-                flex: isMobile ? '1 1 auto' : '0 1 auto',
-                minWidth: 0,
-                maxWidth: isMobile ? '100%' : '70%',
-                cursor: isMobile ? 'pointer' : 'default'
-              }}
-              onClick={() => {
-                if (!isMobile) return;
-                setShowCreatedFull(true);
-                setTimeout(() => setShowCreatedFull(false), 1000);
-              }}
-            >
-              {
-                (() => {
-                  const createdDate = new Date(room.created_at);
-                  const full = createdDate.toLocaleString();
-                  const short = createdDate.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-                  return `Created ${showCreatedFull ? full : short}`;
-                })()
-              }
-            </span>
-            {room.expires_at && !expired && !showCreatedFull && (
+            {startsAt && notStarted ? (
               (() => {
-                const diff = Math.max(0, new Date(room.expires_at).getTime() - now);
-                const mins = Math.floor(diff / 60000);
+                const diff = Math.max(0, startsAt - now);
+                const hrs = Math.floor(diff / 3600000);
+                const mins = Math.floor((diff % 3600000) / 60000);
                 const secs = Math.floor((diff % 60000) / 1000);
+                const dt = new Date(startsAt);
+                const pad = (n: number) => n.toString().padStart(2, '0');
+                const month = dt.getMonth() + 1;
+                const day = dt.getDate();
+                const year = dt.getFullYear();
+                let hours = dt.getHours();
+                const minutes = pad(dt.getMinutes());
+                const seconds = pad(dt.getSeconds());
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12 || 12;
+                const formatted = `${month}/${day}/${year}, ${hours}:${minutes}:${seconds} ${ampm}`;
                 return (
-                  <span style={{ color: '#ffcc66', fontSize: 13, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap' }} title={`Expires at ${new Date(room.expires_at).toLocaleString()}`}>
-                    • Expires in {mins}m {secs}s
+                  <span
+                    style={{
+                      color: '#f59e0b',
+                      fontSize: isMobile ? 12 : 13,
+                      fontWeight: 700,
+                      whiteSpace: isMobile ? 'normal' : 'nowrap',
+                      display: 'inline-block',
+                      flex: isMobile ? '1 1 auto' : '0 0 auto',
+                      wordBreak: isMobile ? 'break-word' : 'normal'
+                    }}
+                    title={`Starts at ${new Date(startsAt).toLocaleString()}`}
+                  >
+                    Starts in {hrs > 0 ? `${hrs}h ` : ''}{mins}m {secs}s • Starts at {formatted}
                   </span>
                 );
               })()
-            )}
-            {room.expires_at && expired && (
-              <span style={{ color: '#ff6b6b', fontSize: 13, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap' }}>• Expired</span>
+            ) : (
+              <>
+                <span
+                  style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    display: 'block',
+                    // On mobile allow the span to grow; on desktop prevent it from taking remaining space so Expires stays close
+                    flex: isMobile ? '1 1 auto' : '0 1 auto',
+                    minWidth: 0,
+                    maxWidth: isMobile ? '100%' : '70%',
+                    cursor: isMobile ? 'pointer' : 'default'
+                  }}
+                  onClick={() => {
+                    if (!isMobile) return;
+                    setShowCreatedFull(true);
+                    setTimeout(() => setShowCreatedFull(false), 1000);
+                  }}
+                >
+                  {
+                    (() => {
+                      const createdDate = new Date(room.created_at);
+                      const full = createdDate.toLocaleString();
+                      const short = createdDate.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+                      return `Created ${showCreatedFull ? full : short}`;
+                    })()
+                  }
+                </span>
+                {room.expires_at && !expired && !showCreatedFull && (
+                  (() => {
+                    const diff = Math.max(0, new Date(room.expires_at).getTime() - now);
+                    const mins = Math.floor(diff / 60000);
+                    const secs = Math.floor((diff % 60000) / 1000);
+                    return (
+                      <span style={{ color: '#ffcc66', fontSize: 13, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap' }} title={`Expires at ${new Date(room.expires_at).toLocaleString()}`}>
+                        • Expires in {mins}m {secs}s
+                      </span>
+                    );
+                  })()
+                )}
+                {room.expires_at && expired && (
+                  <span style={{ color: '#ff6b6b', fontSize: 13, fontWeight: 700, flex: '0 0 auto', whiteSpace: 'nowrap' }}>• Expired</span>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -414,17 +485,35 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
             onClick={handleJoinClick}
             aria-label="Join Room"
             style={{ fontSize: 15, padding: '0.5rem 1.6rem', borderRadius: 8, color: '#ffd700', border: 'none', fontWeight: 700, boxShadow: 'none', transition: 'background 0.18s, color 0.18s', outline: 'none', minWidth: 100, opacity: isJoining ? 0.7 : 1, pointerEvents: isJoining ? 'none' : 'auto' }}
-            disabled={isFull || isJoining}
+            disabled={isFull || isJoining || notStarted}
           >
-            {isJoining ? 'Joining...' : 'Join'}
+            {notStarted ? 'Scheduled' : (isJoining ? 'Joining...' : 'Join')}
           </button>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#10b981', display: 'inline-block', marginRight: 4 }}></span>
-          <span style={{ color: '#bdbdbd', fontSize: 14 }}>Active</span>
+          {/* If scheduled and not started, show clock; if expired show expired; else show active */}
+          {notStarted ? (
+            <>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#f59e0b', display: 'inline-block', marginRight: 4 }}></span>
+              <span style={{ color: '#f59e0b', fontSize: 14 }}>Scheduled</span>
+            </>
+          ) : expired ? (
+            <>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff6b6b', display: 'inline-block', marginRight: 4 }}></span>
+              <span style={{ color: '#ff6b6b', fontSize: 14 }}>Expired</span>
+            </>
+          ) : (
+            <>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#10b981', display: 'inline-block', marginRight: 4 }}></span>
+              <span style={{ color: '#bdbdbd', fontSize: 14 }}>Active</span>
+            </>
+          )}
         </div>
-      </div>
+        </div>
+
+      {/* duplicate scheduled countdown removed; inline scheduled text is shown above in Created/Expires area */}
     </div>
+    </>
   );
 };
 
