@@ -357,6 +357,7 @@ export default function Page() {
     topic?: string;
     tags: string[];
   expiresAfterMinutes?: number | null;
+  scheduled_at?: string | null;
   }): Promise<boolean> => {
     if (!session || !session.user) {
       showSignInModal('You must be signed in to create a room. Please sign in with your Google account to continue.');
@@ -386,6 +387,8 @@ export default function Page() {
       tags: roomData.tags ?? [],         // default to empty array
       // If expiresAfterMinutes was provided, compute ISO expiry timestamp
       expires_at: roomData.expiresAfterMinutes ? new Date(Date.now() + roomData.expiresAfterMinutes * 60000).toISOString() : null,
+      // scheduled_at if provided (should be ISO string or null)
+      scheduled_at: roomData.scheduled_at ?? null,
     };
     // Debug: log the newRoom object before inserting
     console.log('Creating new room:', newRoom);
@@ -417,7 +420,12 @@ export default function Page() {
       created_by_image: newRoom.created_by_image, // include image
       topic: newRoom.topic, // <-- ensure topic is included
   expires_at: newRoom.expires_at, // optional expiry
-    };
+    } as any;
+
+    // Only include scheduled_at in the DB payload if it's set. Some DBs/tables may not have this column yet.
+    if (newRoom.scheduled_at) {
+      minimalRoom.scheduled_at = newRoom.scheduled_at;
+    }
     console.log('DEBUG: Minimal insert payload:', minimalRoom);
 
     // Stricter duplicate check: fetch existing room names and compare a normalized form
