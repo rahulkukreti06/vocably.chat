@@ -76,6 +76,8 @@ interface CreateRoomModalProps {
     tags: string[];
   // optional expiry in minutes; if provided the room will auto-expire after this many minutes
   expiresAfterMinutes?: number | null;
+  // optional scheduled start time in ISO string
+  scheduled_at?: string | null;
   }) => Promise<boolean>;
 }
 
@@ -108,6 +110,8 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   const [newTag, setNewTag] = useState('');
   const [expiresAfterMinutes, setExpiresAfterMinutes] = useState<number | null>(null);
   const [customExpiryMinutes, setCustomExpiryMinutes] = useState<number>(60); // default 60 minutes
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState<string | null>(null); // ISO-like input value
 
   const [isMounted, setIsMounted] = useState(false);
 
@@ -146,6 +150,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         topic,
         tags,
   expiresAfterMinutes: expiresAfterMinutes === -1 ? customExpiryMinutes : expiresAfterMinutes,
+        scheduled_at: scheduleEnabled && scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
       });
 
       if (!success) {
@@ -164,6 +169,8 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       setTags([]);
       setNewTag('');
   setExpiresAfterMinutes(null);
+      setScheduleEnabled(false);
+      setScheduledAt(null);
     } catch (err) {
       // If parent throws, show a toast and keep the form state
       toast.error('Failed to create room. Please try again.');
@@ -621,6 +628,57 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                 e.target.style.boxShadow = 'none';
               }}
             />
+          </div>
+
+          {/* Schedule section */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <FaClock style={{ color: '#f59e0b', fontSize: '0.9rem' }} />
+              <label style={{ fontSize: '0.9rem', fontWeight: 500, color: 'rgba(255, 255, 255, 0.9)' }}>Schedule</label>
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                aria-pressed={scheduleEnabled}
+                onClick={() => setScheduleEnabled(v => !v)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '0.75rem 1rem',
+                  borderRadius: '0.5rem',
+                  backgroundColor: scheduleEnabled ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.02)',
+                  color: scheduleEnabled ? '#10b981' : 'rgba(255,255,255,0.9)',
+                  border: scheduleEnabled ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(255,255,255,0.04)',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  flex: '1 1 100%',
+                  minWidth: 0,
+                  justifyContent: 'flex-start',
+                  width: '100%'
+                }}
+                onMouseOver={(e) => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 18px rgba(2,6,23,0.2)';
+                }}
+                onMouseOut={(e) => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                }}
+              >
+                <FaClock style={{ color: scheduleEnabled ? '#10b981' : '#f59e0b' }} />
+                <span>{scheduleEnabled ? 'Scheduled — Click to disable' : 'Schedule room to start later'}</span>
+              </button>
+              {scheduleEnabled && (
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%', marginTop: 8, flexWrap: 'wrap' }}>
+                  <input
+                    type="datetime-local"
+                    value={scheduledAt ?? ''}
+                    onChange={e => setScheduledAt(e.target.value || null)}
+                    style={{ flex: '1 1 100%', width: '100%', padding: '0.75rem', borderRadius: 8, background: 'rgba(30,32,40,0.8)', color: '#fff', border: '1px solid rgba(255,255,255,0.06)' }}
+                  />
+                  <span style={{ color: '#bdbdbd', fontSize: 13, whiteSpace: 'nowrap' }}>Set a future start time</span>
+                </div>
+              )}
+            </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
