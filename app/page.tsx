@@ -40,6 +40,7 @@ interface Room {
   tags?: string[];
   expires_at?: string | null;
   scheduled_at?: string | null;
+  interested_count?: number;
 }
 
 // Custom hook for media query
@@ -422,6 +423,8 @@ export default function Page() {
       topic: newRoom.topic, // <-- ensure topic is included
   expires_at: newRoom.expires_at, // optional expiry
     } as any;
+  // default interested count
+  minimalRoom.interested_count = 0;
 
     // Only include scheduled_at in the DB payload if it's set. Some DBs/tables may not have this column yet.
     if (newRoom.scheduled_at) {
