@@ -21,6 +21,7 @@ interface RoomCardProps {
     tags?: string[];
   expires_at?: string | null;
   scheduled_at?: string | null;
+  interested_count?: number;
   };
   onJoin: (room: any) => void;
   onRemoveRoom?: (roomId: string) => void;
@@ -44,6 +45,10 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
   const [reporting, setReporting] = useState(false);
   const [topicHover, setTopicHover] = useState(false);
   const [topicClicked, setTopicClicked] = useState(false);
+  const [interestedCount, setInterestedCount] = useState<number>(room.interested_count ?? 0);
+  // Do not persist per-user interest in localStorage anymore.
+  // `isInterested` is a local/session guard to prevent duplicate clicks; not saved to storage.
+  const [isInterested, setIsInterested] = useState<boolean>(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const topicRef = React.useRef<HTMLSpanElement | null>(null);
   const titleContainerRef = React.useRef<HTMLDivElement | null>(null);
@@ -231,6 +236,51 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
       const current = typeof liveParticipantCount === 'number' ? liveParticipantCount : (room.participants || 0);
       if (onParticipantUpdate) onParticipantUpdate(room.id, current + 1);
     } catch {}
+  };
+
+  // (interest toggle implemented later, below)
+
+  // No localStorage handling for interest anymore.
+  // isInterested remains a transient in-memory flag to avoid double-clicking.
+
+  // Now, a click always attempts to increment the server-side count (interested: true).
+  // We use a transient flag to prevent duplicate clicks in the same session.
+  const toggleInterested = async () => {
+    if (isInterested) return; // already clicked in this session
+    setIsInterested(true);
+    // optimistic increment
+    setInterestedCount(c => Math.max(0, c + 1));
+
+    try {
+      const res = await fetch('/api/room-interest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId: room.id, interested: true }),
+      });
+      let data: any = null;
+      try { data = await res.json(); } catch (e) { console.debug('room-interest: non-json response', e); }
+      console.debug('room-interest: response', { status: res.status, ok: res.ok, body: data });
+
+      if (!res.ok) {
+        console.warn('room-interest: server error, reverting optimistic update', data);
+        setIsInterested(false);
+        setInterestedCount(c => Math.max(0, c - 1));
+        return;
+      }
+
+      if (data && typeof data.interested_count === 'number') {
+        setInterestedCount(Math.max(0, data.interested_count));
+      } else if (data && data.persisted === false) {
+        console.info('room-interest: not persisted on server (persisted=false). Ensure SUPABASE_SERVICE_ROLE_KEY is set on server.');
+        // revert optimistic since server didn't persist
+        setIsInterested(false);
+        setInterestedCount(c => Math.max(0, c - 1));
+      }
+    } catch (err) {
+      console.error('room-interest: fetch failed', err);
+      setIsInterested(false);
+      setInterestedCount(c => Math.max(0, c - 1));
+    }
   };
 
   return (
@@ -479,15 +529,37 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
         {isFull ? (
           <span style={{ fontSize: 15, padding: '0.5rem 1.6rem', borderRadius: 8, color: '#ff4d4f', fontWeight: 700, minWidth: 100, textAlign: 'center' }}>Room Full</span>
+        ) : notStarted ? (
+          // For scheduled rooms, show Interested button on the left (styled same as right-side control)
+          <button
+            onClick={toggleInterested}
+            aria-pressed={isInterested}
+            style={{
+              fontSize: 15,
+              padding: '0.5rem 1.2rem',
+              borderRadius: 8,
+              color: isInterested ? '#10b981' : '#bdbdbd',
+              background: isInterested ? 'rgba(16,185,129,0.12)' : 'transparent',
+              border: isInterested ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(255,255,255,0.04)',
+              fontWeight: 700,
+              boxShadow: 'none',
+              transition: 'background 0.18s, color 0.18s',
+              outline: 'none',
+              minWidth: 100,
+              cursor: 'pointer'
+            }}
+          >
+            Interested {interestedCount > 0 ? `(${interestedCount})` : ''}
+          </button>
         ) : (
           <button
             className={styles['room-card__join-btn']}
             onClick={handleJoinClick}
             aria-label="Join Room"
             style={{ fontSize: 15, padding: '0.5rem 1.6rem', borderRadius: 8, color: '#ffd700', border: 'none', fontWeight: 700, boxShadow: 'none', transition: 'background 0.18s, color 0.18s', outline: 'none', minWidth: 100, opacity: isJoining ? 0.7 : 1, pointerEvents: isJoining ? 'none' : 'auto' }}
-            disabled={isFull || isJoining || notStarted}
+            disabled={isFull || isJoining}
           >
-            {notStarted ? 'Scheduled' : (isJoining ? 'Joining...' : 'Join')}
+            {isJoining ? 'Joining...' : 'Join'}
           </button>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
@@ -496,6 +568,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
             <>
               <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#f59e0b', display: 'inline-block', marginRight: 4 }}></span>
               <span style={{ color: '#f59e0b', fontSize: 14 }}>Scheduled</span>
+              {/* right-side Interested button removed; left-side control handles interest */}
             </>
           ) : expired ? (
             <>
