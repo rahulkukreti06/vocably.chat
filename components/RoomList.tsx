@@ -19,6 +19,7 @@ interface Room {
   tags?: string[];
   expires_at?: string | null;
   scheduled_at?: string | null;
+  interested_count?: number;
 }
 
 interface RoomListProps {
