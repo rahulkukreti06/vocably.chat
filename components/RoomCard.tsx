@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaUser, FaLock, FaGlobe, FaEllipsisV, FaFlag } from 'react-icons/fa';
+import { FaUser, FaLock, FaGlobe, FaEllipsisV, FaFlag, FaShareAlt } from 'react-icons/fa';
 import styles from '../styles/RoomCard.module.css';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
@@ -43,6 +43,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
   const [isMobile, setIsMobile] = useState(false);
   const [showCreatedFull, setShowCreatedFull] = useState(false);
   const [reporting, setReporting] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [topicHover, setTopicHover] = useState(false);
   const [topicClicked, setTopicClicked] = useState(false);
   const [interestedCount, setInterestedCount] = useState<number>(room.interested_count ?? 0);
@@ -222,6 +223,46 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
     }
   };
 
+  const handleShare = async () => {
+    // share or copy the room link
+    setSharing(true);
+    setMenuOpen(false);
+    try {
+      if (typeof window === 'undefined') throw new Error('No window');
+      const url = `${window.location.origin}/rooms/${room.id}`;
+      // Try native share first
+      if (navigator && (navigator as any).share) {
+        try {
+          await (navigator as any).share({
+            title: room.name || 'Join room',
+            text: `Join the room ${room.name}`,
+            url,
+          });
+          return;
+        } catch (err) {
+          // If user cancels share or it fails, fall back to clipboard
+          console.debug('native share failed or cancelled', err);
+        }
+      }
+
+      // Fallback: copy to clipboard
+      if (navigator && (navigator as any).clipboard && (navigator as any).clipboard.writeText) {
+        await (navigator as any).clipboard.writeText(url);
+        alert('Room link copied to clipboard');
+      } else {
+        // last resort: prompt with the link so user can copy manually
+        window.prompt('Copy this link to share the room', url);
+      }
+    } catch (err) {
+      console.error('Failed to share/copy room link', err);
+      try {
+        if (typeof window !== 'undefined') window.prompt('Copy this link to share the room', `${window.location.origin}/rooms/${room.id}`);
+      } catch {}
+    } finally {
+      setSharing(false);
+    }
+  };
+
   const handleJoinClick = async () => {
     if (isJoining) return; // Prevent multiple clicks
     if (notStarted) {
@@ -287,38 +328,35 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
     <>
     <div className={styles['room-card'] + ' room-card'} tabIndex={0} aria-label={`Room card for ${room.name}`} role="region" style={{ position: 'relative' }}>
       {/* Three-dot menu in top right */}
-      <div ref={menuRef} style={{ position: 'absolute', top: 12, right: 16, zIndex: 2 }}>
+      <div ref={menuRef} className={styles.menuWrapper}>
         <button
           aria-label="Room settings"
-          style={{ background: 'none', border: 'none', color: '#bdbdbd', fontSize: 20, cursor: 'pointer', padding: 4 }}
+          className={styles.menuTrigger}
           onClick={() => setMenuOpen((v) => !v)}
         >
           <FaEllipsisV />
         </button>
         {menuOpen && (
-          <div style={{ position: 'absolute', top: 28, right: 0, background: '#1a1c23', border: '1px solid #22242a', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.5)', minWidth: 140, zIndex: 10 }}>
+          <div className={styles.menu} role="menu">
+            <button
+              onClick={handleShare}
+              disabled={sharing}
+              className={styles.menuItem}
+              role="menuitem"
+              aria-disabled={sharing}
+            >
+              <FaShareAlt className={styles.menuIcon} />
+              <span>Share Room</span>
+            </button>
             <button
               onClick={handleReport}
               disabled={reporting}
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 8, 
-                width: '100%', 
-                border: 'none', 
-                background: 'transparent',
-                color: '#ff4d4f', 
-                fontWeight: 600, 
-                fontSize: 15, 
-                padding: '10px 16px', 
-                cursor: 'pointer', 
-                borderRadius: 8,
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#2a2d35'}
-              onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = 'transparent'}
+              className={`${styles.menuItem} ${styles.report}`}
+              role="menuitem"
+              aria-disabled={reporting}
             >
-              <FaFlag style={{ marginRight: 6 }} /> Report Room
+              <FaFlag className={styles.menuIcon} />
+              <span>Report Room</span>
             </button>
           </div>
         )}
