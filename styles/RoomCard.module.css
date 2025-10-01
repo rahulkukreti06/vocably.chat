@@ -62,6 +62,101 @@
   box-shadow: 0 4px 24px #10b98133;
 }
 
+/* Menu and menu item styles for the three-dot menu */
+.menuWrapper {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 2;
+}
+
+.menuTrigger {
+  background: none;
+  border: none;
+  color: #bdbdbd;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: background 0.12s, color 0.12s, transform 0.12s;
+}
+.menuTrigger:hover,
+.menuTrigger:focus {
+  background: rgba(255,255,255,0.02);
+  color: #fff;
+  outline: none;
+}
+
+.menu {
+  position: absolute;
+  top: 28px;
+  right: 0;
+  background: #1a1c23;
+  border: 1px solid #22242a;
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  min-width: 160px;
+  z-index: 10;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #bdbdbd;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.12s, color 0.12s;
+  text-align: left;
+  /* keep icon and label on single line and truncate label if needed */
+  white-space: nowrap;
+}
+.menuItem:hover,
+.menuItem:focus {
+  background: #2a2d35;
+  color: #fff;
+  outline: none;
+}
+.menuItem[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.menuIcon {
+  margin-right: 4px;
+  min-width: 18px;
+  display: inline-block;
+  /* reserve fixed space for the icon so label can truncate reliably */
+  flex: 0 0 18px;
+}
+
+/* ensure the label inside a menuItem truncates but stays on one line */
+.menuItem > span {
+  display: inline-block;
+  min-width: 0; /* allow shrinking inside flex */
+  max-width: calc(100% - 28px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report {
+  color: #ff6b6b;
+}
+.report:hover,
+.report:focus {
+  color: #ff4d4f;
+}
+
 /* Title single-line and marquee */
 .room-card__title-container {
   overflow: hidden;
@@ -94,6 +189,11 @@
     min-height: 180px;
     margin: 0.7rem 0;
   }
+  /* make the menu a bit narrower on small screens but keep items on one line */
+  .menu {
+    min-width: 140px;
+    right: 0;
+  }
   .room-card__host-avatar {
     width: 36px;
     height: 36px;
@@ -124,6 +224,10 @@
   .room-card {
     padding: 0.5rem 0.2rem 0.5rem 0.2rem;
     min-height: 120px;
+  }
+  .menu {
+    min-width: 120px;
+    right: 0;
   }
   .room-card__host-avatar {
     width: 28px;
