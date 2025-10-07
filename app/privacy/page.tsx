@@ -126,7 +126,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2 className="text-xl font-semibold text-[#ffe066] mb-2">Contact Us</h2>
               <p className="mb-3">Questions or concerns about privacy?</p>
-              <a href="mailto:vocably.chat@gmail.com" className="inline-flex items-center text-emerald-400 hover:text-emerald-300 font-medium">vocably.chat@gmail.com</a>
+              <a href="mailto:vocably.chat@gmail.com" className="inline-flex items-center text-emerald-400 hover:text-emerald-300 font-medium">team@vocably.chat</a>
             </section>
         </article>
 
