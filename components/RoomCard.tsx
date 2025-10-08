@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaUser, FaLock, FaGlobe, FaEllipsisV, FaFlag, FaShareAlt } from 'react-icons/fa';
+import { ChevronDown } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import styles from '../styles/RoomCard.module.css';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
@@ -31,6 +33,7 @@ interface RoomCardProps {
 }
 
 const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParticipantUpdate, liveParticipantCount, isJoining = false }) => {
+  const { data: session, status } = useSession();
   // Always use liveParticipantCount for all logic and display
   const participantCount = typeof liveParticipantCount === 'number' ? liveParticipantCount : room.participants;
   const isFull = participantCount >= room.max_participants;
@@ -47,9 +50,10 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
   const [topicHover, setTopicHover] = useState(false);
   const [topicClicked, setTopicClicked] = useState(false);
   const [interestedCount, setInterestedCount] = useState<number>(room.interested_count ?? 0);
-  // Do not persist per-user interest in localStorage anymore.
-  // `isInterested` is a local/session guard to prevent duplicate clicks; not saved to storage.
   const [isInterested, setIsInterested] = useState<boolean>(false);
+  const [interestedUsers, setInterestedUsers] = useState<any[]>([]);
+  const [showInterestedDropdown, setShowInterestedDropdown] = useState<boolean>(false);
+  const [loadingInterests, setLoadingInterests] = useState<boolean>(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const topicRef = React.useRef<HTMLSpanElement | null>(null);
   const titleContainerRef = React.useRef<HTMLDivElement | null>(null);
@@ -80,9 +84,11 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMenuOpen(false);
       }
+      // Close interested dropdown when clicking outside
+      setShowInterestedDropdown(false);
     }
 
-    if (menuOpen) {
+    if (menuOpen || showInterestedDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
@@ -177,17 +183,158 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
     return () => clearTimeout(to);
   }, [room['scheduled_at']]);
 
+  // Load interested users on mount for scheduled rooms
+  useEffect(() => {
+    if (notStarted && interestedCount > 0) {
+      fetchInterestedUsers();
+    }
+  }, [room.id, notStarted]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.interested-dropdown-container')) {
+        setShowInterestedDropdown(false);
+      }
+    }
+
+    if (showInterestedDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showInterestedDropdown]);
+
+  // Load user's interest state when session becomes available
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user && notStarted) {
+      // Load interested users and check if current user is interested
+      fetchInterestedUsers();
+    }
+  }, [status, session?.user, notStarted, room.id]);
+
+  // Poll for interest updates for scheduled rooms (only when page is visible)
+  useEffect(() => {
+    if (!notStarted) return; // Only poll for scheduled rooms
+    
+    let pollInterval: NodeJS.Timeout;
+    
+    const startPolling = () => {
+      pollInterval = setInterval(() => {
+        if (status === 'authenticated' && !loadingInterests && !document.hidden) {
+          fetchInterestedUsers();
+        }
+      }, 15000); // Poll every 15 seconds when page is visible
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (pollInterval) clearInterval(pollInterval);
+      } else {
+        // Page became visible, start polling and do immediate refresh
+        if (status === 'authenticated' && !loadingInterests) {
+          fetchInterestedUsers();
+        }
+        startPolling();
+      }
+    };
+
+    // Start polling immediately
+    startPolling();
+    
+    // Listen for page visibility changes
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [notStarted, status, loadingInterests]);
+
+  // Listen for interest updates from other tabs/windows
+  useEffect(() => {
+    if (!notStarted) return;
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === `room-interest-update-${room.id}` && e.newValue) {
+        // Another tab updated interest for this room, refresh our data
+        setTimeout(() => fetchInterestedUsers(), 500); // Small delay to ensure server is updated
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [notStarted, room.id]);
+
   // Helper to get reporterId
   const getReporterId = () => {
-    // Use session user name if available, fallback to localStorage, then 'Anonymous'
+    // Use NextAuth session first, then localStorage fallback
+    if (session?.user?.name) {
+      return session.user.name;
+    }
     if (typeof window !== 'undefined') {
       try {
-        const session = JSON.parse(window.sessionStorage.getItem('nextauth.session') || '{}');
-        if (session?.user?.name) return session.user.name;
+        return localStorage.getItem('userName') || 'Anonymous';
       } catch {}
-      return localStorage.getItem('userName') || 'Anonymous';
     }
     return 'Anonymous';
+  };
+
+  // Helper to get current user identity (id, name, email, image) from NextAuth session or localStorage fallbacks
+  const getCurrentUserIdentity = (): { id?: string | null; name?: string | null; email?: string | null; image?: string | null } => {
+    const result: { id?: string | null; name?: string | null; email?: string | null; image?: string | null } = { id: null, name: null, email: null, image: null };
+    
+    // Don't proceed if session is still loading
+    if (status === 'loading') {
+      return result;
+    }
+    
+    // First try NextAuth session
+    if (session?.user) {
+      result.id = session.user.id ? String(session.user.id) : result.id;
+      result.name = session.user.name ? String(session.user.name) : result.name;
+      result.email = session.user.email ? String(session.user.email) : result.email;
+      result.image = session.user.image ? String(session.user.image) : result.image;
+    }
+    
+    // Fallback to localStorage if no session data
+    if (typeof window !== 'undefined') {
+      try {
+        if (!result.id) result.id = localStorage.getItem('userId') || localStorage.getItem('user_id') || result.id;
+        if (!result.name) result.name = localStorage.getItem('userName') || localStorage.getItem('user_name') || result.name;
+        if (!result.email) result.email = localStorage.getItem('userEmail') || localStorage.getItem('email') || result.email;
+      } catch (e) {
+        // ignore localStorage errors
+      }
+    }
+    
+    return result;
+  };  // Helper to fetch interested users for this room
+  const fetchInterestedUsers = async () => {
+    if (loadingInterests) return;
+    setLoadingInterests(true);
+    try {
+      const res = await fetch(`/api/room-interested-users?roomId=${encodeURIComponent(room.id)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setInterestedUsers(data.interests || []);
+        setInterestedCount(data.count || 0);
+        
+        // Check if current user is in the list
+        const currentUser = getCurrentUserIdentity();
+        if (currentUser.id) {
+          const userInterested = data.interests?.some((interest: any) => interest.user_id === currentUser.id);
+          setIsInterested(!!userInterested);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch interested users:', error);
+    } finally {
+      setLoadingInterests(false);
+    }
   };
 
   const handleReport = async () => {
@@ -287,40 +434,89 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
   // Now, a click always attempts to increment the server-side count (interested: true).
   // We use a transient flag to prevent duplicate clicks in the same session.
   const toggleInterested = async () => {
-    if (isInterested) return; // already clicked in this session
-    setIsInterested(true);
-    // optimistic increment
-    setInterestedCount(c => Math.max(0, c + 1));
+    // Wait for session to load
+    if (status === 'loading') {
+      return; // Don't do anything while session is loading
+    }
+    
+    if (status === 'unauthenticated') {
+      alert('Please sign in to show interest in this room.');
+      return;
+    }
+
+    const currentUser = getCurrentUserIdentity();
+    if (!currentUser.id) {
+      alert('Please sign in to show interest in this room.');
+      return;
+    }
+
+    const newInterestState = !isInterested;
+    
+    // Optimistic update
+    setIsInterested(newInterestState);
+    if (newInterestState) {
+      setInterestedCount(c => c + 1);
+    } else {
+      setInterestedCount(c => Math.max(0, c - 1));
+    }
 
     try {
       const res = await fetch('/api/room-interest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId: room.id, interested: true }),
+        body: JSON.stringify({ 
+          roomId: room.id, 
+          interested: newInterestState,
+          userId: currentUser.id,
+          userName: currentUser.name,
+          userEmail: currentUser.email,
+          userImage: currentUser.image
+        }),
       });
-      let data: any = null;
-      try { data = await res.json(); } catch (e) { console.debug('room-interest: non-json response', e); }
+      
+      const data = await res.json();
       console.debug('room-interest: response', { status: res.status, ok: res.ok, body: data });
 
       if (!res.ok) {
         console.warn('room-interest: server error, reverting optimistic update', data);
-        setIsInterested(false);
-        setInterestedCount(c => Math.max(0, c - 1));
+        setIsInterested(!newInterestState);
+        if (newInterestState) {
+          setInterestedCount(c => Math.max(0, c - 1));
+        } else {
+          setInterestedCount(c => c + 1);
+        }
+        alert(data.error || 'Failed to update interest');
         return;
       }
 
-      if (data && typeof data.interested_count === 'number') {
-        setInterestedCount(Math.max(0, data.interested_count));
-      } else if (data && data.persisted === false) {
-        console.info('room-interest: not persisted on server (persisted=false). Ensure SUPABASE_SERVICE_ROLE_KEY is set on server.');
-        // revert optimistic since server didn't persist
-        setIsInterested(false);
-        setInterestedCount(c => Math.max(0, c - 1));
+      // Update with server response
+      if (typeof data.interested_count === 'number') {
+        setInterestedCount(data.interested_count);
+      }
+      if (typeof data.user_interested === 'boolean') {
+        setIsInterested(data.user_interested);
+      }
+
+      // Always refresh the interested users list after successful toggle
+      // This ensures the dropdown shows the most up-to-date list
+      fetchInterestedUsers();
+
+      // Notify other tabs/windows that this room's interest data has changed
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`room-interest-update-${room.id}`, Date.now().toString());
+        // Remove the item immediately to allow future updates
+        setTimeout(() => localStorage.removeItem(`room-interest-update-${room.id}`), 100);
       }
     } catch (err) {
       console.error('room-interest: fetch failed', err);
-      setIsInterested(false);
-      setInterestedCount(c => Math.max(0, c - 1));
+      // Revert optimistic update
+      setIsInterested(!newInterestState);
+      if (newInterestState) {
+        setInterestedCount(c => Math.max(0, c - 1));
+      } else {
+        setInterestedCount(c => c + 1);
+      }
+      alert('Failed to update interest');
     }
   };
 
@@ -568,27 +764,146 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
         {isFull ? (
           <span style={{ fontSize: 15, padding: '0.5rem 1.6rem', borderRadius: 8, color: '#ff4d4f', fontWeight: 700, minWidth: 100, textAlign: 'center' }}>Room Full</span>
         ) : notStarted ? (
-          // For scheduled rooms, show Interested button on the left (styled same as right-side control)
-          <button
-            onClick={toggleInterested}
-            aria-pressed={isInterested}
-            style={{
-              fontSize: 15,
-              padding: '0.5rem 1.2rem',
-              borderRadius: 8,
-              color: isInterested ? '#10b981' : '#bdbdbd',
-              background: isInterested ? 'rgba(16,185,129,0.12)' : 'transparent',
-              border: isInterested ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(255,255,255,0.04)',
-              fontWeight: 700,
-              boxShadow: 'none',
-              transition: 'background 0.18s, color 0.18s',
-              outline: 'none',
-              minWidth: 100,
-              cursor: 'pointer'
-            }}
-          >
-            Interested {interestedCount > 0 ? `(${interestedCount})` : ''}
-          </button>
+          // For scheduled rooms, show Interested button with integrated ChevronDown arrow
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={toggleInterested}
+              aria-pressed={isInterested}
+              disabled={status === 'loading' || status === 'unauthenticated'}
+              style={{
+                fontSize: 15,
+                padding: interestedCount > 0 && status === 'authenticated' ? '0.5rem 2.5rem 0.5rem 1.2rem' : '0.5rem 1.2rem',
+                borderRadius: 8,
+                color: isInterested ? '#10b981' : '#bdbdbd',
+                background: isInterested ? 'rgba(16,185,129,0.12)' : 'transparent',
+                border: isInterested ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(255,255,255,0.04)',
+                fontWeight: 700,
+                boxShadow: 'none',
+                transition: 'background 0.18s, color 0.18s',
+                outline: 'none',
+                minWidth: 100,
+                cursor: (status === 'loading' || status === 'unauthenticated') ? 'not-allowed' : 'pointer',
+                opacity: (status === 'loading' || status === 'unauthenticated') ? 0.6 : 1
+              }}
+            >
+              {status === 'loading' ? 'Loading...' : 
+               status === 'unauthenticated' ? 'Sign in to show interest' :
+               `Interested ${interestedCount > 0 ? `(${interestedCount})` : ''}`}
+            </button>
+            {interestedCount > 0 && status === 'authenticated' && (
+              <>
+                {/* Separator line */}
+                <div style={{
+                  position: 'absolute',
+                  right: 40,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '1px',
+                  height: '60%',
+                  background: isInterested ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.1)',
+                  zIndex: 1
+                }} />
+                <span 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowInterestedDropdown(!showInterestedDropdown);
+                  }}
+                  style={{
+                    position: 'absolute',
+                    right: 14,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    zIndex: 2,
+                    color: isInterested ? '#10b981' : '#bdbdbd',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <ChevronDown size={16} />
+                </span>
+              </>
+            )}
+            {showInterestedDropdown && (interestedUsers.length > 0 || loadingInterests) && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                zIndex: 1000,
+                background: '#1a1a1a',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 8,
+                padding: 8,
+                minWidth: 200,
+                maxHeight: 200,
+                overflowY: 'auto',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+              }}>
+                <div style={{ fontSize: 12, color: '#bdbdbd', marginBottom: 8, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  Interested Users ({interestedUsers.length})
+                  {loadingInterests && (
+                    <div className={styles.spinner} style={{
+                      width: 10,
+                      height: 10,
+                      border: '1px solid #bdbdbd',
+                      borderTop: '1px solid transparent',
+                      borderRadius: '50%'
+                    }} />
+                  )}
+                </div>
+                {interestedUsers.map(user => (
+                  <div key={user.id} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '4px 0',
+                    borderBottom: '1px solid rgba(255,255,255,0.05)'
+                  }}>
+                    {user.image ? (
+                      <img 
+                        src={user.image} 
+                        alt={user.name || 'User'} 
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: 12,
+                          objectFit: 'cover'
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: 12,
+                        background: '#666',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 10,
+                        color: 'white'
+                      }}>
+                        {(user.name || 'U').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <span style={{ fontSize: 13, color: '#ffffff' }}>
+                      {user.name || 'Anonymous User'}
+                    </span>
+                  </div>
+                ))}
+                {!loadingInterests && interestedUsers.length === 0 && (
+                  <div style={{ 
+                    fontSize: 12, 
+                    color: '#888', 
+                    textAlign: 'center', 
+                    padding: '8px 0',
+                    fontStyle: 'italic'
+                  }}>
+                    No interested users yet
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         ) : (
           <button
             className={styles['room-card__join-btn']}
