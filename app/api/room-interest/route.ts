@@ -11,9 +11,19 @@ import { createClient } from '@supabase/supabase-js';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { roomId, interested } = body as { roomId: string; interested: boolean };
+    const { roomId, interested, userId, userName, userEmail, userImage } = body as { 
+      roomId: string; 
+      interested: boolean;
+      userId?: string;
+      userName?: string;
+      userEmail?: string;
+      userImage?: string;
+    };
     if (!roomId || typeof interested !== 'boolean') {
       return NextResponse.json({ ok: false, error: 'invalid payload' }, { status: 400 });
+    }
+    if (!userId) {
+      return NextResponse.json({ ok: false, error: 'userId is required' }, { status: 400 });
     }
 
     const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -41,49 +51,33 @@ export async function POST(request: Request) {
 
   const supabase = createClient(SUPABASE_URL, clientKey!);
 
-    const delta = interested ? 1 : -1;
-
-    // Try using an RPC for atomic update first (requires creating the function in Postgres).
+    // Use the new manage_room_interest function
     try {
-      const { data: rpcData, error: rpcError } = await supabase.rpc('increment_interested', { room_id: roomId, delta });
-      if (!rpcError && rpcData) {
-        // rpcData may be the returned interested_count (array or number depending on function)
-        const count = Array.isArray(rpcData) ? rpcData[0]?.interested_count ?? rpcData[0] : rpcData as any;
-        return NextResponse.json({ ok: true, persisted: true, interested_count: Number(count) });
+      const { data: rpcData, error: rpcError } = await supabase.rpc('manage_room_interest', {
+        p_room_id: roomId,
+        p_user_id: userId,
+        p_user_name: userName || null,
+        p_user_email: userEmail || null,
+        p_user_image: userImage || null,
+        p_interested: interested
+      });
+
+      if (rpcError) {
+        console.error('manage_room_interest RPC error:', rpcError);
+        return NextResponse.json({ ok: false, error: String(rpcError.message) }, { status: 500 });
       }
-      // If rpcError exists, fallthrough to read-then-update
+
+      return NextResponse.json({ 
+        ok: true, 
+        persisted: true, 
+        interested_count: rpcData.interested_count,
+        user_interested: rpcData.user_interested
+      });
     } catch (e) {
-      // ignore and fallback
+      console.error('manage_room_interest error:', e);
+      return NextResponse.json({ ok: false, error: String(e) }, { status: 500 });
     }
-
-    // Fallback: safe read-then-update (not fully atomic, but clamped to >=0)
-    const { data: current, error: selectError } = await supabase
-      .from('rooms')
-      .select('interested_count')
-      .eq('id', roomId)
-      .maybeSingle();
-
-    if (selectError) {
-      return NextResponse.json({ ok: false, error: String(selectError) }, { status: 500 });
-    }
-
-    const oldCount = (current && typeof current.interested_count === 'number') ? current.interested_count : 0;
-    const newCount = Math.max(0, oldCount + delta);
-
-    const { data: updated, error: updateError } = await supabase
-      .from('rooms')
-      .update({ interested_count: newCount })
-      .eq('id', roomId)
-      .select('interested_count')
-      .maybeSingle();
-
-    if (updateError) {
-      return NextResponse.json({ ok: false, error: String(updateError) }, { status: 500 });
-    }
-
-    return NextResponse.json({ ok: true, persisted: true, interested_count: updated?.interested_count ?? newCount });
   } catch (err) {
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
   }
 }
-
