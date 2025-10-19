@@ -16,11 +16,11 @@ import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Vocably | Voice Chat for Language Learning & Making Friends',
+    default: 'Vocably – Talk, Learn & Connect Globally by Voice & Video Chat',
     template: '%s | Vocably',
   },
   description:
-    'Vocably is a free real-time voice chat app for learning new languages, practicing English, and making friends with people around the world. Join public or private rooms, talk to strangers, and grow your speaking skills in a safe, global community.',
+    'Vocably is a free real-time voice and video chat app for learning new languages, practicing new languages, and making friends with people around the world. Join public or private rooms, talk to strangers, and grow your speaking skills in a safe, global community.',
   keywords: [
     'language learning',
     'voice chat',
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     url: 'https://vocably.chat',
     title: 'Vocably | Voice Chat for Language Learning & Making Friends',
     description:
-      'Vocably lets you join or create voice chat rooms to practice languages, meet new people, and make friends globally. No sign-up required.',
+      'Vocably lets you join or create voice chat rooms to practice languages, meet new people, and make friends globally.',
     images: [
       {
         url: '/favicon.png',
@@ -125,7 +125,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           \"@type\": \"WebSite\",
           \"name\": \"Vocably\",
           \"url\": \"https://vocably.chat/",
-          \"description\": \"Vocably is a free real-time voice chat app for learning new languages, practicing English, and making friends with people around the world.\"
+          \"description\": \"Create or join topic-based voice and video chat rooms. Talk with people worldwide about anything from learning languages to fun conversations.\"
         }` }} />
       </head>
       <body>
