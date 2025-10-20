@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: '%s | Vocably',
   },
   description:
-    'Vocably is a free real-time voice and video chat app for learning new languages, practicing new languages, and making friends with people around the world. Join public or private rooms, talk to strangers, and grow your speaking skills in a safe, global community.',
+    'Vocably is a free real-time voice and video chat app for topic based conversation, practicing new languages, and making friends with people around the world. Join public or private rooms, talk to strangers, and grow your speaking skills in a safe, global community.',
   keywords: [
     'language learning',
     'voice chat',
