@@ -864,7 +864,7 @@ export default function Page() {
                   </Link>
                   {/* Reddit */}
                   <a
-                    href="https://www.reddit.com/r/vocably_chat"
+                    href="https://www.reddit.com/r/vocablychat"
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
