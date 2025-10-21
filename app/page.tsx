@@ -1036,7 +1036,7 @@ export default function Page() {
                   
                   {/* Reddit Button (mobile with marquee) */}
                   <a
-                    href="https://www.reddit.com/r/vocably_chat"
+                    href="https://www.reddit.com/r/vocablychat"
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
