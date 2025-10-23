@@ -310,6 +310,32 @@ export const Header: React.FC<HeaderProps> = ({ onCreateRoomClick, onProfileClic
                 </svg>
                 Privacy Policy
               </Link>
+              <Link
+                href="/blog"
+                className="header-btn"
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.5rem',
+                  color: '#10b981',
+                  border: '1px solid #10b98140',
+                  marginBottom: '0.5rem',
+                  textDecoration: 'none',
+                  width: '100%',
+                  textAlign: 'center',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20" />
+                  <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z" />
+                </svg>
+                Blog
+              </Link>
               <button
                 className="theme-btn"
                 onClick={handleThemeClick}
@@ -450,6 +476,36 @@ export const Header: React.FC<HeaderProps> = ({ onCreateRoomClick, onProfileClic
                     borderRadius: '0.5rem',
                     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
                   }}>
+                    {/* Blog link */}
+                    <Link
+                      href="/blog"
+                      className="header-btn"
+                      onClick={() => setProfileMenuOpen(false)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '0.5rem',
+                        color: '#10b981',
+                        border: '1px solid #10b98140',
+                        textDecoration: 'none',
+                        width: '100%',
+                        textAlign: 'left',
+                        transition: 'all 0.2s ease',
+                        background: 'transparent',
+                        cursor: 'pointer',
+                        fontSize: '0.95rem',
+                        justifyContent: 'flex-start'
+                      }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20" />
+                        <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z" />
+                      </svg>
+                      Blog
+                    </Link>
+
                     {/* Removed Contact Us from desktop dropdown */}
 
                     <button
