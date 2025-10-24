@@ -2,8 +2,55 @@ import BlogHeader from '../../../components/BlogHeader';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Top Voice Chat Platforms to Meet New People — Vocably',
-  description: 'A roundup of voice chat platforms that help people meet and connect in 2025.',
+  title: 'Top 10 Voice Chat Platforms to Meet New People (2025) — Vocably',
+  description: 'A 2025 roundup of the best voice chat platforms to meet new people, practice languages, and build communities — features, strengths, and use cases for each.',
+  keywords: [
+    'voice chat',
+    'voice chat platforms',
+    'meet new people',
+    'language practice',
+    'online communities',
+    'Vocably'
+  ],
+  authors: [{ name: 'Rahul Kukreti', url: 'https://vocably.chat' }],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: 'https://vocably.chat/blog/top-voice-chat-platforms-2025'
+  },
+  openGraph: {
+    title: 'Top 10 Voice Chat Platforms to Meet New People (2025) — Vocably',
+    description: 'A 2025 roundup of the best voice chat platforms to meet new people, practice languages, and build communities.',
+    url: 'https://vocably.chat/blog/top-voice-chat-platforms-2025',
+    siteName: 'Vocably',
+    images: [
+      {
+        url: 'https://vocably.chat/images/vocably-touch-icon.png',
+        width: 512,
+        height: 512,
+        alt: 'Vocably'
+      }
+    ],
+    type: 'article',
+    publishedTime: '2025-10-22T00:00:00Z',
+    modifiedTime: '2025-10-22T00:00:00Z',
+    authors: ['Rahul Kukreti']
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Top 10 Voice Chat Platforms to Meet New People (2025) — Vocably',
+    description: 'A 2025 roundup of the best voice chat platforms to meet new people, practice languages, and build communities.',
+    images: ['/images/vocably-touch-icon.png']
+  }
 };
 
 export default function FirstPost() {
