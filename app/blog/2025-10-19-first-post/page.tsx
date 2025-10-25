@@ -79,6 +79,39 @@ export default function FirstPost() {
       In 2025, voice chat platforms have evolved far beyond simple calls they’ve become global spaces to meet new people, learn languages, and build communities. Whether you’re looking for casual conversations, gaming hangouts, or serious discussions, these platforms make it easy to talk with people worldwide. Here are the top 10 voice chat platforms worth checking out this year.
     </p>
 
+    {/* Article structured data for search engines */}
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "https://vocably.chat/blog/top-voice-chat-platforms-2025"
+        },
+        "headline": "Top 10 Voice Chat Platforms to Meet New People (2025)",
+        "description": "A 2025 roundup of the best voice chat platforms to meet new people, practice languages, and build communities.",
+        "image": [
+          "https://vocably.chat/images/vocably-touch-icon.png"
+        ],
+        "author": {
+          "@type": "Person",
+          "name": "Rahul Kukreti",
+          "url": "https://vocably.chat"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Vocably",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://vocably.chat/images/vocably-touch-icon.png"
+          }
+        },
+        "datePublished": "2025-10-22T00:00:00Z",
+        "dateModified": "2025-10-22T00:00:00Z"
+      }) }}
+    />
+
         <div className="post-content" style={{ maxWidth: 980, margin: '28px auto 0', display: 'flex', flexDirection: 'column', gap: 22 }}>
 
           {/* 1. Vocably.chat (expanded) */}
@@ -110,13 +143,13 @@ export default function FirstPost() {
             </div>
             <h3 style={{ marginTop: 12, marginBottom: 8, color: '#071025', fontWeight: 800 }}>2. Discord</h3>
             <p style={{ margin: 0, color: '#0b1220' }}>
-              Discord has grown from a gamer-focused voice/chat tool into one of the most versatile platforms for community building. At its core are servers self contained communities with text channels, voice channels, and integrations. Voice channels are persistent spaces where members can drop in and out, and the platform supports large scale audio with low latency, plus features like per user mute and deafen, push to talk, and high quality audio codecs when needed. For people looking to meet ne  friends, Discord’s primary advantage is discoverability within niche servers: join a server around a hobby, and ice  hannels organically form as members choose to talk in real time.
+              Discord has grown from a gamer-focused voice/chat tool into one of the most versatile platforms for community building. At its core are servers self contained communities with text channels, voice channels, and integrations. Voice channels are persistent spaces where members can drop in and out, and the platform supports large scale audio with low latency, plus features like per user mute and deafen, push to talk, and high quality audio codecs when needed. For people looking to meet new friends, Discord’s primary advantage is discoverability within niche servers: join a server around a hobby, and voice channels organically form as members choose to talk in real time.
             </p>
             <p style={{ marginTop: 12, color: '#0b1220' }}>
-              Moderation and role  ystems are a major strength. Server admins can creat  roles with granular permi si ns, use automated moderation bots to filter content or welcome new users, and configure invite systems to control growth. This makes Discord suitable for communities that care about safety and long-term structure for example, language learning servers that create channels for different proficiency levels, or hobby servers that schedule weekly voice hangouts. Integration with third party bots introduces fun and utility: music bots, trivia games, and scheduling bots convert voice channels into event hubs.
+              Moderation and role systems are a major strength. Server admins can create roles with granular permissions, use automated moderation bots to filter content or welcome new users, and configure invite systems to control growth. This makes Discord suitable for communities that care about safety and long-term structure for example, language learning servers that create channels for different proficiency levels, or hobby servers that schedule weekly voice hangouts. Integration with third party bots introduces fun and utility: music bots, trivia games, and scheduling bots convert voice channels into event hubs.
             </p>
             <p style={{ marginTop: 12, color: '#0b1220' }}>
-              Discovery outside of closed communities can be harder: while large puic servers often get new members via social media or word of mouth, smaller servers rely on curated invites. Discord’s Stage channels and Events features attempt to bridge that gap by surfacing scheduled conversations and live panels for broader audiences. If you prefer a structured community with persistent spaces, maintainable moderation, and lots of tooling and you don’t mind joining a server first Discord is a top choice for meeting focused groups and recurring voice meetups.
+              Discovery outside of closed communities can be harder: while large public servers often get new members via social media or word of mouth, smaller servers rely on curated invites. Discord’s Stage channels and Events features attempt to bridge that gap by surfacing scheduled conversations and live panels for broader audiences. If you prefer a structured community with persistent spaces, maintainable moderation, and lots of tooling and you don’t mind joining a server first Discord is a top choice for meeting focused groups and recurring voice meetups.
             </p>
             <p style={{ marginTop: 8 }}><a href="https://discord.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#0b1220', fontWeight: 700 }}>Visit Discord</a></p>
           </div>
@@ -215,7 +248,7 @@ export default function FirstPost() {
               Integration is Blizzard’s practical advantage. Players already have persistent identities (handles, guild affiliations, friend lists), so voice interactions tie into an existing social graph rather than being ephemeral. Moderation is typically managed through guild leadership and game reporting tools, and because conversations are anchored to shared objectives, there’s a natural moderation effect players who are disruptive risk losing team invites or social standing. The tech side is also tailored to gaming: voice quality, low latency, and in game overlays reduce setup friction and keep players focused on play.
             </p>
             <p style={{ marginTop: 12, color: '#0b1220' }}>
-              That said, Blizzard’s ecosystem is specialized. If your goal is broad, serendipitous social discovery among strangers, a general-purpose voice platform may expose you to a wider variety of people. Blizzard shines when your social goal is to meet others through shared activity finding players with similar skill, timezone, or playstyle and then converting those game-based interactions into ongoing friendships. For communities centered around competitive play, co op events, or content creation within the gaming world, Blizzard’s voice features provide a comfortable and familiar place to build connections.
+              That said, Blizzard’s ecosystem is specialized. If your goal is broad, serendipitous social discovery among strangers, a general-purpose voice platform may expose you to a wider variety of people. Blizzard shines when your social goal is to meet others through shared activity finding players with similar skill, timezone, or playstyle and then converting those game-based interactions into ongoing friendships. For communities centered around competitive play, co-op events, or content creation within the gaming world, Blizzard’s voice features provide a comfortable and familiar place to build connections.
             </p>
             <p style={{ marginTop: 12, color: '#0b1220' }}>
               Practical tips: join guilds or community groups that run voice events, attend scheduled raids or public game nights, and be consistent repeated positive interactions in the same group are what turn teammates into friends. Remember that gaming-based social graphs often orbit the game itself, so if you stop playing, the social ties may loosen; plan to move promising connections to other platforms if you want them to persist outside of play.
@@ -235,7 +268,7 @@ export default function FirstPost() {
               Line is a messaging platform that is deeply embedded in daily life across parts of East and Southeast Asia, and that local ubiquity changes how voice chat is used. Because many people join Line with a real-world contact graph (phone numbers, friends, and local groups), voice interactions often start from a place of familiarity and cultural context. That makes Line especially effective for meeting people within particular regions or cultural communities where the app is the de facto standard.
             </p>
             <p style={{ marginTop: 12, color: '#0b1220' }}>
-              Line supports group channels, voice and video calls, and a range of social features such as timelines and stickers that give conversations local flavor. In practice, users meet new people via public channels, interest-based groups, or community add ins. The cultural proximity shared language, timezone, and local references means early conversations can be richer, and it’s often easier to transition from a chat to a real-world meet or longer term online friendship when both participants share a social context.
+              Line supports group channels, voice and video calls, and a range of social features such as timelines and stickers that give conversations local flavor. In practice, users meet new people via public channels, interest-based groups, or community add-ins. The cultural proximity shared language, timezone, and local references means early conversations can be richer, and it’s often easier to transition from a chat to a real-world meet or longer-term online friendship when both participants share a social context.
             </p>
             <p style={{ marginTop: 12, color: '#0b1220' }}>
               For discovery, Line isn’t optimized for global serendipity; instead it emphasizes locally relevant networks. If your social goals include meeting people in a specific city, country, or language community, Line’s density in certain markets makes it valuable. That same density also contributes to trust: people commonly link phone numbers or established identities to Line accounts, which reduces the anonymity that can cause awkward or unsafe interactions on more anonymous platforms.
