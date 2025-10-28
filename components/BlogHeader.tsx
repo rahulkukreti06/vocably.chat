@@ -115,7 +115,7 @@ export default function BlogHeader() {
 
 const headerWrap: React.CSSProperties = {
   background: '#ffffff',
-  borderBottom: '1px solid #eee',
+  borderBottom: '2px solid #f0e036ff',
   position: 'fixed',
   top: 0,
   left: 0,
