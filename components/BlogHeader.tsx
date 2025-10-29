@@ -42,7 +42,7 @@ export default function BlogHeader() {
       <div style={container} className="blog-header-container">
         <div style={left}>
           <Link href="/" style={brandLink}>
-            <span style={brand}>Vocably</span>
+            <span className="brand-text" style={brand}>Vocably</span>
           </Link>
         </div>
 
@@ -86,6 +86,7 @@ export default function BlogHeader() {
 
       <style>{`
     .hamburger{ display:none; background:transparent; border:none; padding:6px; transition: transform .12s ease; }
+        .brand-text{ font-size: 40px; font-weight:900; display:inline-block; }
         /* hover / focus for header links */
         .blog-nav a, .blog-header-right a, .mobile-link, .mobile-cta { transition: color .14s ease, background .14s ease, transform .12s ease, box-shadow .12s ease; }
         .blog-nav a:hover, .blog-nav a:focus { color: #064e3b; background: rgba(16,185,129,0.06); border-radius:6px; }
@@ -105,6 +106,7 @@ export default function BlogHeader() {
           .blog-nav{ display:none }
           .blog-header-right{ display:none }
           .hamburger{ display:inline-flex; margin-left: auto }
+          .brand-text{ font-size: 28px !important }
         }
       `}</style>
     </header>
@@ -135,7 +137,7 @@ const container: React.CSSProperties = {
 // (headerHeight is declared at top)
 
 const left: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 12 };
-const brand: React.CSSProperties = { fontWeight: 900, fontSize: 40, background: 'linear-gradient(90deg,#ffe066,#10b981)', WebkitBackgroundClip: 'text' as any, color: 'transparent' };
+const brand: React.CSSProperties = { fontWeight: 900, background: 'linear-gradient(90deg,#ffe066,#10b981)', WebkitBackgroundClip: 'text' as any, color: 'transparent' };
 const brandLink: React.CSSProperties = { textDecoration: 'none' };
 
 const nav: React.CSSProperties = { display: 'flex', gap: 24, alignItems: 'center' };
