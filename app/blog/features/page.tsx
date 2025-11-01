@@ -47,7 +47,7 @@ export const metadata = {
 
 export default function FeaturesPage() {
   return (
-    <div style={{ background: '#e7e7fd', minHeight: '100vh', color: '#e6eef8' }}>
+    <div style={{ background: '#F5F1EE', minHeight: '100vh', color: '#e6eef8' }}>
       <BlogHeader />
       <main style={{ padding: '40px 20px' }}>
         <style>{`
