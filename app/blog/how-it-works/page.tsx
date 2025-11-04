@@ -4,11 +4,28 @@ import Link from 'next/link';
 
 export const metadata = {
   title: 'How Vocably Works — Vocably',
-  description: 'How Vocably works: rooms, discovery, participation, and privacy',
+  description: 'How Vocably works: clear steps for joining, hosting, scheduling, and staying safe in voice rooms.',
+  keywords: ['voice chat', 'how it works', 'hosting rooms', 'schedule rooms', 'Vocably', 'moderation', 'privacy'],
+  authors: [{ name: 'Rahul Kukreti', url: 'https://vocably.chat' }],
+  alternates: { canonical: 'https://vocably.chat/blog/how-it-works' },
   openGraph: {
     title: 'How Vocably Works — Vocably',
-    description: 'How Vocably works: rooms, discovery, participation, and privacy',
-    url: 'https://vocably.chat/blog/how-it-works'
+    description: 'How Vocably works: clear steps for joining, hosting, scheduling, and staying safe in voice rooms.',
+    url: 'https://vocably.chat/blog/how-it-works',
+    type: 'article',
+    siteName: 'Vocably',
+    locale: 'en_US',
+    images: [
+      { url: 'https://vocably.chat/Schedule-room-img.png', width: 1200, height: 628, alt: 'Schedule rooms on Vocably' },
+      { url: 'https://vocably.chat/Room-sharing.jpg', width: 1200, height: 628, alt: 'Share a room on Vocably' }
+    ]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'How Vocably Works — Vocably',
+    description: 'Clear, practical steps for joining, hosting, and scheduling rooms on Vocably.',
+    creator: '@vocably',
+    images: ['https://vocably.chat/Schedule-room-img.png']
   }
 };
 
@@ -51,11 +68,27 @@ export default function HowItWorksPage() {
             },
             "headline": "How Vocably Works — Step-by-Step: Joining, Participating, and Hosting Rooms",
             "description": "A step-by-step, practical guide describing how to sign up, discover rooms, join, host, schedule, and keep conversations safe on Vocably.",
-            "image": ["https://vocably.chat/favicon.png"],
+            "image": ["https://vocably.chat/favicon.png", "https://vocably.chat/Room-sharing.jpg"],
+            "keywords": "voice chat, hosting, scheduling, moderation, privacy",
+            "articleSection": "How-To / Guides",
             "author": { "@type": "Person", "name": "Rahul Kukreti", "url": "https://vocably.chat" },
             "publisher": { "@type": "Organization", "name": "Vocably", "logo": { "@type": "ImageObject", "url": "https://vocably.chat/favicon.png" } },
             "datePublished": "2025-11-03T00:00:00Z",
             "dateModified": "2025-11-03T00:00:00Z"
+          }) }}
+        />
+
+        {/* Breadcrumb structured data for better search results */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://vocably.chat/" },
+              { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://vocably.chat/blog" },
+              { "@type": "ListItem", "position": 3, "name": "How It Works", "item": "https://vocably.chat/blog/how-it-works" }
+            ]
           }) }}
         />
 
@@ -68,7 +101,7 @@ export default function HowItWorksPage() {
 
             <h3 style={{ marginTop: 18, color: '#071025' }}>Step 1 — Create an account quickly</h3>
             <p style={{ color: '#0b1220', lineHeight: 1.8 }}>
-              Getting started on Vocably is super easy — just sign up using your Google account. Make sure you use an email you check often, so you don’t miss out on updates or reminders for scheduled rooms.
+              Getting started on Vocably is super easy just sign up using your Google account. Make sure you use an email you check often, so you don’t miss out on updates or reminders for scheduled rooms.
             </p>
 
             <p style={{ color: '#0b1220', lineHeight: 1.8 }}>Once you're in, Vocably will ask for microphone access. This is required to join voice or video conversations, so go ahead and allow it. Not sure if your mic is working? You can quickly test it in your device settings before joining your first room. That way, you’ll be ready to jump right into the conversation without any hiccups.</p>
@@ -87,12 +120,12 @@ export default function HowItWorksPage() {
               When you enter a room on Vocably, it’s a good idea to start by staying on mute and just listening for a bit. This helps you understand the room’s style how fast people are talking, how they take turns, and what the overall mood is like.
             </p>
             <p style={{ color: '#0b1220', lineHeight: 1.8 }}>
-              Some rooms might use tools like hand-raise or speaking queues. In that case, just follow the flow. If it’s a more open, free-form conversation, wait for a natural pause before jumping in. When you're ready to speak, unmute and introduce yourself briefly it’s a simple way to join the conversation smoothly and respectfully.
+              Some rooms might use tools like hand-raise or speaking queues. In that case, just follow the flow. If it’s a more open, free form conversation, wait for a natural pause before jumping in. When you're ready to speak, unmute and introduce yourself briefly it’s a simple way to join the conversation smoothly and respectfully.
             </p>
 
             <h3 style={{ marginTop: 18, color: '#071025' }}>Step 4 — Basic in-room controls</h3>
             <div style={{ color: '#0b1220', lineHeight: 1.8 }}>
-              <p>Once you're comfortably inside a room, take a moment to get familiar with the basic controls — they help you enjoy the experience your way.</p>
+              <p>Once you're comfortably inside a room, take a moment to get familiar with the basic controls they help you enjoy the experience your way.</p>
               <ul style={{ marginTop: 8, paddingLeft: 18, fontSize: '14px', color: '#0b1220' }}>
                 <li><strong>Mute / Unmute</strong>: toggle your mic when you want to speak or when you want to listen quietly.</li>
                 <li><strong>Pin & volume</strong>: pin a speaker to keep them visible, and adjust volume to a comfortable level.</li>
@@ -103,7 +136,7 @@ export default function HowItWorksPage() {
 
             <h3 style={{ marginTop: 18, color: '#071025' }}>Step 5 — Host Your Own Room: Set Up and Lead with Clarity</h3>
             <p style={{ color: '#0b1220', lineHeight: 1.8 }}>
-              Ready to start your own conversation? Hosting a room on Vocably is quick and straightforward. Start by choosing a clear, catchy title and writing a short one-line description so people immediately know what the session is about.
+              Ready to start your own conversation? Hosting a room on Vocably is quick and straightforward. Start by choosing a clear, catchy title and writing a short one line description so people immediately know what the session is about.
             </p>
 
             <p style={{ color: '#0b1220', lineHeight: 1.8 }}>
@@ -112,13 +145,13 @@ export default function HowItWorksPage() {
 
             <ul style={{ marginTop: 8, paddingLeft: 18, lineHeight: 1.6, fontSize: '14px', color: '#0b1220' }}>
               <li><strong>Public or Private?</strong> Decide whether you want anyone to join, or just a select group.</li>
-              <li><strong>Participant Limit</strong> Set a maximum number of attendees — smaller groups are great for deeper discussions, while larger rooms can attract diverse opinions.</li>
+              <li><strong>Participant Limit</strong> Set a maximum number of attendees smaller groups are great for deeper discussions, while larger rooms can attract diverse opinions.</li>
               <li><strong>Tags & Language</strong> Add the right topic and language tags so your room is easier to find.</li>
             </ul>
 
             <h3 style={{ marginTop: 18, color: '#071025' }}>Step 6 — Schedule Your Room and Keep Everyone in the Loop</h3>
             <p style={{ color: '#0b1220', lineHeight: 1.8 }}>
-              Want to host a focused, well-attended conversation? Scheduling a room in advance is the way to go. Scheduled rooms appear in the discovery section, giving people time to notice, plan, and actually show up — no more random drop-ins or empty rooms.
+              Want to host a focused, well-attended conversation? Scheduling a room in advance is the way to go. Scheduled rooms appear in the discovery section, giving people time to notice, plan, and actually show up no more random drop ins or empty rooms.
             </p>
 
             <p style={{ color: '#0b1220', lineHeight: 1.8 }}>
@@ -137,12 +170,12 @@ export default function HowItWorksPage() {
 
             <h3 style={{ marginTop: 18, color: '#071025' }}>Step 7 — Privacy, invite links, and expiry</h3>
             <p style={{ color: '#0b1220', lineHeight: 1.8 }}>
-              Sometimes, you want a room that feels more exclusive — whether it's for a small practice group, a class session, or a private discussion. With Vocably, you can easily make a room private and share access through a unique invite link. This way, only the people you choose can join. You can also set an expiry time for the room, so it doesn't stay open after you're done. If you’re running recurring sessions, it’s a good idea to share the invite through a calendar event or private message. That makes it easy for people to join on time and understand what’s expected, whether it’s behavior rules, language level, or just a simple reminder of the start time. Keeping things organized helps everyone feel comfortable and stay focused.
+              Sometimes, you want a room that feels more exclusive whether it's for a small practice group, a class session, or a private discussion. With Vocably, you can easily make a room private and share access through a unique invite link. This way, only the people you choose can join. You can also set an expiry time for the room, so it doesn't stay open after you're done. If you’re running recurring sessions, it’s a good idea to share the invite through a calendar event or private message. That makes it easy for people to join on time and understand what’s expected, whether it’s behavior rules, language level, or just a simple reminder of the start time. Keeping things organized helps everyone feel comfortable and stay focused.
             </p>
 
             <h3 style={{ marginTop: 18, color: '#071025' }}>Step 8 — Moderation and safety</h3>
             <p style={{ color: '#0b1220', lineHeight: 1.8 }}>
-              A great conversation depends on a safe and respectful environment, and Vocably gives hosts the tools to make that happen. As a host, you can mute or remove anyone who’s being disruptive, and you can assign co-hosts to help you manage the flow — especially in larger or more active rooms. If you're a participant and notice any abusive or inappropriate behavior, don’t just ignore it — report it. Reporting helps keep the community healthy and shows that bad behavior isn’t tolerated. And if you're hosting a recurring room and keep running into the same issues, you might want to switch it to invite-only or add stricter entry controls. A little moderation goes a long way in creating a space where everyone feels welcome and heard.
+              A great conversation depends on a safe and respectful environment, and Vocably gives hosts the tools to make that happen. As a host, you can mute or remove anyone who’s being disruptive, and you can assign co-hosts to help you manage the flow especially in larger or more active rooms. If you're a participant and notice any abusive or inappropriate behavior, don’t just ignore it report it. Reporting helps keep the community healthy and shows that bad behavior isn’t tolerated. And if you're hosting a recurring room and keep running into the same issues, you might want to switch it to invite-only or add stricter entry controls. A little moderation goes a long way in creating a space where everyone feels welcome and heard.
             </p>
 
             <h3 style={{ marginTop: 18, color: '#071025' }}>Step 9 — Improve audio and sharing</h3>
