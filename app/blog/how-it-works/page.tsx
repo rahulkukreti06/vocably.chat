@@ -25,7 +25,7 @@ export const metadata = {
     title: 'How Vocably Works — Vocably',
     description: 'Clear, practical steps for joining, hosting, and scheduling rooms on Vocably.',
     creator: '@vocably',
-    images: ['https://vocably.chat/Schedule-room-img.png']
+    images: ['https://vocably.chat/favicon.png']
   }
 };
 
