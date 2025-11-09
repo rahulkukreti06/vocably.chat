@@ -69,7 +69,7 @@ export default function BlogPage() {
       <main style={{ maxWidth: 1200, margin: '8px auto 40px', padding: '0 20px' }}>
         <div className="posts-grid">
           
-          <CardLarge category="Makers" title="Top 10 Voice Chat Platforms to Meet New People" excerpt="A roundup of platforms to meet and connect — Oct 22, 2025." href="/blog/2025-10-19-first-post" imageSrc="/top-10-voice-chat-platform.jpg" />
+          <CardLarge category="Know" title="Top 10 Voice Chat Platforms to Meet New People" excerpt="A roundup of platforms to meet and connect — Oct 22, 2025." href="/blog/2025-10-19-first-post" imageSrc="/top-10-voice-chat-platform.jpg" />
           <CardSmall
             category="Know"
             title="How to Meet New People Online and Actually Make Friends in 2025"
