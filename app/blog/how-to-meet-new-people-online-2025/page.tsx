@@ -5,20 +5,28 @@ import Link from 'next/link';
 export const metadata = {
   title: 'How to Meet New People Online and Actually Make Friends in 2025 — Vocably',
   description: 'Practical, human-first advice on meeting people online in 2025 — why voice and small rooms work, where to look, and how to grow real friendships.',
+  keywords: ['meet people online', 'make friends online', 'voice chat', 'video chat', 'online communities', 'social tips'],
   authors: [{ name: 'Rahul Kukreti', url: 'https://vocably.chat' }],
   alternates: { canonical: 'https://vocably.chat/blog/how-to-meet-new-people-online-2025' },
+  robots: {
+    index: true,
+    follow: true,
+  },
   openGraph: {
     title: 'How to Meet New People Online and Actually Make Friends in 2025 — Vocably',
     description: 'Practical, human-first advice on meeting people online in 2025 — why voice and small rooms work, where to look, and how to grow real friendships.',
     url: 'https://vocably.chat/blog/how-to-meet-new-people-online-2025',
     images: [
-      { url: 'https://vocably.chat/favicon.png', width: 1200, height: 628, alt: 'People talking online' }
+      { url: 'https://vocably.chat/favicon.png', width: 1200, height: 628, alt: 'People talking online' },
+      { url: 'https://vocably.chat/favicon.png', width: 1200, height: 628, alt: 'People talking in voice rooms' }
     ]
   },
   twitter: {
     card: 'summary_large_image',
     title: 'How to Meet New People Online — Vocably',
     description: 'Human-first tips for building real friendships online in 2025.',
+    creator: '@vocably',
+    site: '@vocably',
   }
 };
 
@@ -44,7 +52,7 @@ export const metadata = {
           /* Top image removed per request */
 
           /* Body typography */
-          .post-content h3.section { font-family: 'Merriweather', Georgia, serif; font-size: 20px; color: #071025; margin: 20px 0 8px; }
+          .post-content h3.section { font-family: 'Merriweather', Georgia, serif; color: #071025; margin: 20px 0 8px; }
           .post-content p { font-size: 18px; color: #0b1220; line-height: 1.95; margin: 0 0 18px; }
           .post-content .lead { font-size: 20px; color: #0b1220; line-height: 1.9; font-weight: 500; margin-bottom: 18px }
 
@@ -58,6 +66,9 @@ export const metadata = {
           @media (max-width: 580px) {
             .post-content { max-width: 92%; padding: 20px 14px }
             .post-content p { font-size: 17px }
+            /* Make the specific section heading larger but moderate on phones */
+            /* Use !important to ensure this mobile rule wins over other styles */
+            .post-content h3.section { font-size: 20px !important; line-height: 1.1; font-weight: 800; margin: 14px 0 10px; }
             .hero .title { font-size: 28px !important; }
           }
         `}</style>
