@@ -17,6 +17,8 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
   const hasLeftRef = useRef(false);
   const leaveInFlightRef = useRef<Promise<void> | null>(null);
   const resizeCleanupRef = useRef<(() => void) | null>(null);
+  const [participantCount, setParticipantCount] = useState<number | null>(null);
+  const participantSyncRef = useRef<NodeJS.Timeout | null>(null);
 
   // Decrement count once, only if actually joined
   const leaveOnce = React.useCallback(() => {
@@ -219,11 +221,14 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
           if (!hasJoinedRef.current) {
             hasJoinedRef.current = true;
             console.log('User actually joined Jitsi meeting');
+            // Notify server that local user joined (existing behavior)
             fetch('/api/room-participants', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ roomId, action: 'join' }),
             }).catch(err => console.error('Failed to update participant count on join:', err));
+            // After joining, do an immediate sync to get authoritative count from Jitsi
+            setTimeout(() => syncAndSendCount(), 500);
           }
         });
 
@@ -241,6 +246,16 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
         api.addEventListener('videoConferenceLeft', () => {
           console.log('User actually left Jitsi meeting');
           leaveOnce();
+          // After leaving, clear local count
+          setParticipantCount(null);
+        });
+        // Listen for participant join/leave events to keep an accurate in-room count
+        api.addEventListener('participantJoined', () => {
+          // Defer to a full sync (avoid small discrepancies)
+          setTimeout(() => syncAndSendCount(), 300);
+        });
+        api.addEventListener('participantLeft', () => {
+          setTimeout(() => syncAndSendCount(), 300);
         });
         
         // Also handle window/tab close events (only if not already left)
@@ -326,6 +341,52 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
       });
     };
 
+    // Helper: attempt to read Jitsi participant count using API and send it to the server
+    function readJitsiParticipantCount(): number | null {
+      try {
+        if (!apiRef.current) return null;
+        // Prefer getNumberOfParticipants if available (returns integer)
+        if (typeof apiRef.current.getNumberOfParticipants === 'function') {
+          const n = apiRef.current.getNumberOfParticipants();
+          if (typeof n === 'number') return Math.max(0, Math.floor(n));
+        }
+        // Fallback: getParticipantsInfo (may return array)
+        if (typeof apiRef.current.getParticipantsInfo === 'function') {
+          const info = apiRef.current.getParticipantsInfo();
+          if (Array.isArray(info)) return Math.max(0, info.length);
+        }
+      } catch (err) {
+        // ignore
+      }
+      return null;
+    }
+
+    async function syncAndSendCount() {
+      const n = readJitsiParticipantCount();
+      if (n === null) return;
+      // Update local UI
+      setParticipantCount(n);
+      // Send authoritative count to server (use 'set' action)
+      try {
+        await fetch('/api/room-participants', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roomId, action: 'set', count: n }),
+          keepalive: true as any,
+        });
+      } catch (err) {
+        console.error('Failed to sync participant count:', err);
+      }
+    }
+
+    // Start a periodic sync to keep server and UI consistent (every 10s)
+    function startParticipantSync() {
+      if (participantSyncRef.current) clearInterval(participantSyncRef.current);
+      participantSyncRef.current = setInterval(() => {
+        if (apiRef.current) syncAndSendCount();
+      }, 10000);
+    }
+
     if (!window.JitsiMeetExternalAPI) {
       const script = document.createElement('script');
       script.src = `https://${domain}/external_api.js`; // Back to HTTPS
@@ -347,6 +408,10 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
       // Clean up participant tracking when component unmounts
       if (roomId && apiRef.current?._cleanupBeforeUnload) {
         apiRef.current._cleanupBeforeUnload();
+      }
+      if (participantSyncRef.current) {
+        clearInterval(participantSyncRef.current);
+        participantSyncRef.current = null;
       }
   // If unmount happens without explicit leave event, attempt once
   leaveOnce();
