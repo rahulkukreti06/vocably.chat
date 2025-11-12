@@ -46,7 +46,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { roomId, action } = await request.json();
+  const payload = await request.json();
+  const { roomId, action, count } = payload || {};
   console.log('JOIN API called with:', { roomId, action });
   
   if (!roomId || !action) {
@@ -54,27 +55,75 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Debug: print current participantCounts object
-    console.log('Current participantCounts:', participantCounts);
-    // Update counts based on action
-    if (action === 'join') {
-      participantCounts[roomId] = (participantCounts[roomId] || 0) + 1;
-      console.log(`Joined room: ${roomId}, new count: ${participantCounts[roomId]}`);
-    } else if (action === 'leave') {
-      participantCounts[roomId] = Math.max(0, (participantCounts[roomId] || 0) - 1);
-      console.log(`Left room: ${roomId}, new count: ${participantCounts[roomId]}`);
+    // Allow a direct 'set' action where caller provides an authoritative count
+    if (action === 'set' && typeof count !== 'undefined') {
+      const safeProvided = Number.isFinite(Number(count)) && Number(count) >= 0 ? Math.floor(Number(count)) : 0;
+      // Persist the provided count to DB
+      const { data: updateData, error: updateError } = await supabase
+        .from('rooms')
+        .update({ participants: safeProvided })
+        .eq('id', roomId)
+        .select('participants');
+
+      if (updateError) {
+        console.error('Supabase update error (set):', updateError);
+      } else if (updateData && updateData.length > 0) {
+        participantCounts[roomId] = Number(updateData[0].participants) || safeProvided;
+      } else {
+        participantCounts[roomId] = safeProvided;
+      }
+
+      // Broadcast authoritative value
+      broadcastParticipantCounts();
+      return NextResponse.json({ success: true, participants: participantCounts[roomId] });
     }
 
-    // Update the participants column in Supabase
+    // Read the latest participants value from the DB to avoid relying solely on in-memory counters
+    const { data: currentData, error: selectError } = await supabase
+      .from('rooms')
+      .select('participants')
+      .eq('id', roomId)
+      .single();
+
+    if (selectError) {
+      console.error('Supabase select error:', selectError);
+    }
+
+    const currentDbValue = currentData && typeof currentData.participants !== 'undefined' && currentData.participants !== null
+      ? Number(currentData.participants)
+      : 0;
+    const safeCurrent = Number.isFinite(currentDbValue) && currentDbValue >= 0 ? Math.floor(currentDbValue) : 0;
+
+    // Compute the new count based on the authoritative DB value
+    let newCount = safeCurrent;
+    if (action === 'join') {
+      newCount = safeCurrent + 1;
+      console.log(`Join request for ${roomId}: ${safeCurrent} -> ${newCount}`);
+    } else if (action === 'leave') {
+      newCount = Math.max(0, safeCurrent - 1);
+      console.log(`Leave request for ${roomId}: ${safeCurrent} -> ${newCount}`);
+    }
+
+    // Persist the new count back to Supabase
     const { data: updateData, error: updateError } = await supabase
       .from('rooms')
-      .update({ participants: participantCounts[roomId] })
-      .eq('id', roomId);
+      .update({ participants: newCount })
+      .eq('id', roomId)
+      .select('participants');
+
     if (updateError) {
       console.error('Supabase update error:', updateError);
+    } else if (updateData && updateData.length > 0) {
+      // Ensure we keep an in-memory reflection of the latest value
+      participantCounts[roomId] = Number(updateData[0].participants) || newCount;
+      console.log(`Updated DB and cache for ${roomId}:`, participantCounts[roomId]);
+    } else {
+      // Fallback to our computed value
+      participantCounts[roomId] = newCount;
+      console.log(`Updated cache for ${roomId} (no DB row returned):`, participantCounts[roomId]);
     }
 
-    // Broadcast the update to all WebSocket clients
+    // Broadcast the update to all WebSocket clients with the authoritative counts
     broadcastParticipantCounts();
 
     return NextResponse.json({ success: true });
