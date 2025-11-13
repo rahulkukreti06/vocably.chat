@@ -135,6 +135,21 @@ export async function POST(request: Request) {
           const { data: rpcData, error: rpcError } = await serverSupabase.rpc('change_participants', { p_room_id: roomId, p_delta: delta });
           if (rpcError) {
             console.error('RPC change_participants error:', rpcError);
+            // Fallback: perform an atomic-like update using SQL to avoid leaving counts inconsistent
+            try {
+              const { data: updateData, error: updateError } = await db
+                .from('rooms')
+                .update({ participants: newCount })
+                .eq('id', roomId)
+                .select('participants');
+              if (!updateError && updateData && updateData.length > 0) {
+                finalCount = Number(updateData[0].participants);
+              } else if (updateError) {
+                console.error('Supabase update error (fallback):', updateError);
+              }
+            } catch (err) {
+              console.error('Fallback update error after RPC failure:', err);
+            }
           } else if (rpcData) {
             // rpcData may be an array or scalar depending on Postgres function signature
             // Try to normalize to a number
@@ -142,6 +157,23 @@ export async function POST(request: Request) {
             const val = typeof maybe === 'object' && maybe !== null ? (maybe.change_participants ?? Object.values(maybe)[0]) : maybe;
             const parsed = Number(val);
             if (Number.isFinite(parsed)) finalCount = Math.max(0, Math.floor(parsed));
+            else {
+              // If RPC returned unexpected value, attempt fallback update
+              try {
+                const { data: updateData, error: updateError } = await db
+                  .from('rooms')
+                  .update({ participants: newCount })
+                  .eq('id', roomId)
+                  .select('participants');
+                if (!updateError && updateData && updateData.length > 0) {
+                  finalCount = Number(updateData[0].participants);
+                } else if (updateError) {
+                  console.error('Supabase update error (fallback after rpc unexpected):', updateError);
+                }
+              } catch (err) {
+                console.error('Fallback update error after RPC unexpected response:', err);
+              }
+            }
           }
         } else {
           // For non-delta actions fallback to direct update
@@ -151,6 +183,7 @@ export async function POST(request: Request) {
             .eq('id', roomId)
             .select('participants');
           if (updateError) console.error('Supabase update error:', updateError);
+          else if (updateData && updateData.length > 0) finalCount = Number(updateData[0].participants);
         }
       } catch (err) {
         console.error('Error calling RPC change_participants:', err);
