@@ -17,14 +17,18 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
   const hasLeftRef = useRef(false);
   const leaveInFlightRef = useRef<Promise<void> | null>(null);
   const resizeCleanupRef = useRef<(() => void) | null>(null);
+  const pendingSyncTimeoutRef = useRef<any>(null);
   const [participantCount, setParticipantCount] = useState<number | null>(null);
   const participantSyncRef = useRef<NodeJS.Timeout | null>(null);
+  const syncingRef = useRef(false);
 
   // Decrement count once, only if actually joined
   const leaveOnce = React.useCallback(() => {
     if (!roomId) return;
     if (hasLeftRef.current) return;
-    hasLeftRef.current = true;
+  hasLeftRef.current = true;
+  // Cancel any pending syncs immediately to avoid stale 'set' requests after leave
+  clearSyncs();
     try {
       const payload = JSON.stringify({ roomId, action: 'leave' });
       if (typeof navigator !== 'undefined' && 'sendBeacon' in navigator) {
@@ -45,6 +49,18 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
         .then(() => { leaveInFlightRef.current = null; });
     }
   }, [roomId]);
+
+  // Clear scheduled syncs and polling when user leaves to avoid stale writes
+  const clearSyncs = () => {
+    if (participantSyncRef.current) {
+      clearInterval(participantSyncRef.current as any);
+      participantSyncRef.current = null;
+    }
+    if (pendingSyncTimeoutRef.current) {
+      clearTimeout(pendingSyncTimeoutRef.current);
+      pendingSyncTimeoutRef.current = null;
+    }
+  };
 
   useEffect(() => {
     // Aggressively auto-click "Join in browser" on mobile pre-join screen
@@ -228,7 +244,9 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
               body: JSON.stringify({ roomId, action: 'join' }),
             }).catch(err => console.error('Failed to update participant count on join:', err));
             // After joining, do an immediate sync to get authoritative count from Jitsi
-            setTimeout(() => syncAndSendCount(), 500);
+            scheduleDebouncedSync(200);
+            // Start periodic syncs once joined
+            startParticipantSync();
           }
         });
 
@@ -248,14 +266,16 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
           leaveOnce();
           // After leaving, clear local count
           setParticipantCount(null);
+          // Stop any pending syncs to avoid stale writes
+          clearSyncs();
         });
         // Listen for participant join/leave events to keep an accurate in-room count
         api.addEventListener('participantJoined', () => {
-          // Defer to a full sync (avoid small discrepancies)
-          setTimeout(() => syncAndSendCount(), 300);
+          // Debounce/coalesce frequent events
+          scheduleDebouncedSync(300);
         });
         api.addEventListener('participantLeft', () => {
-          setTimeout(() => syncAndSendCount(), 300);
+          scheduleDebouncedSync(300);
         });
         
         // Also handle window/tab close events (only if not already left)
@@ -361,21 +381,42 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
       return null;
     }
 
+    // Debounced scheduler to coalesce multiple Jitsi events into a single authoritative sync.
+    function scheduleDebouncedSync(delay = 500) {
+      // If the user has left, don't schedule
+      if (hasLeftRef.current) return;
+      if (pendingSyncTimeoutRef.current) {
+        clearTimeout(pendingSyncTimeoutRef.current);
+        pendingSyncTimeoutRef.current = null;
+      }
+      pendingSyncTimeoutRef.current = setTimeout(() => {
+        pendingSyncTimeoutRef.current = null;
+        if (!hasLeftRef.current) syncAndSendCount();
+      }, delay);
+    }
+
     async function syncAndSendCount() {
-      const n = readJitsiParticipantCount();
-      if (n === null) return;
-      // Update local UI
-      setParticipantCount(n);
-      // Send authoritative count to server (use 'set' action)
+      if (hasLeftRef.current) return;
+      if (syncingRef.current) return; // avoid concurrent sync calls
+      syncingRef.current = true;
       try {
-        await fetch('/api/room-participants', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ roomId, action: 'set', count: n }),
-          keepalive: true as any,
-        });
-      } catch (err) {
-        console.error('Failed to sync participant count:', err);
+        const n = readJitsiParticipantCount();
+        if (n === null) return;
+        // Update local UI
+        setParticipantCount(n);
+        // Send authoritative count to server (use 'set' action)
+        try {
+          await fetch('/api/room-participants', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ roomId, action: 'set', count: n }),
+            keepalive: true as any,
+          });
+        } catch (err) {
+          console.error('Failed to sync participant count:', err);
+        }
+      } finally {
+        syncingRef.current = false;
       }
     }
 
@@ -409,12 +450,10 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
       if (roomId && apiRef.current?._cleanupBeforeUnload) {
         apiRef.current._cleanupBeforeUnload();
       }
-      if (participantSyncRef.current) {
-        clearInterval(participantSyncRef.current);
-        participantSyncRef.current = null;
-      }
-  // If unmount happens without explicit leave event, attempt once
-  leaveOnce();
+      // Clear sync intervals/timeouts
+      clearSyncs();
+      // If unmount happens without explicit leave event, attempt once
+      leaveOnce();
       
       if (jitsiContainerRef.current) {
         jitsiContainerRef.current.innerHTML = '';
