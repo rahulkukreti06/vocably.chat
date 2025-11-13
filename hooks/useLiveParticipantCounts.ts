@@ -11,6 +11,20 @@ export function useLiveParticipantCounts(rooms: { id: string }[]) {
   const roomIds = rooms ? rooms.map(r => r.id).sort() : [];
 
   useEffect(() => {
+    // Listen for immediate participant count updates from other components
+    function handleImmediateUpdate(e: Event) {
+      try {
+        const ev = e as CustomEvent;
+        const roomsData = ev.detail as { [k: string]: number } | undefined;
+        if (roomsData && typeof roomsData === 'object') {
+          setCounts(prev => ({ ...prev, ...roomsData }));
+        }
+      } catch (err) {
+        // ignore
+      }
+    }
+    window.addEventListener('vocably:participantCounts', handleImmediateUpdate as any);
+
     if (!roomIds || roomIds.length === 0) return;
     let subscription: any;
     let ws: WebSocket | null = null;
@@ -113,6 +127,7 @@ export function useLiveParticipantCounts(rooms: { id: string }[]) {
       if (pollInterval) clearInterval(pollInterval);
       stopHeartbeat();
       if (heartbeatTimeout) clearTimeout(heartbeatTimeout);
+      window.removeEventListener('vocably:participantCounts', handleImmediateUpdate as any);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomIds.join(',')]);
