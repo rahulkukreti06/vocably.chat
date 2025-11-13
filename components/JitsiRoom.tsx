@@ -32,8 +32,35 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
     try {
       const payload = JSON.stringify({ roomId, action: 'leave' });
       if (typeof navigator !== 'undefined' && 'sendBeacon' in navigator) {
-        const blob = new Blob([payload], { type: 'application/json' });
-        navigator.sendBeacon('/api/room-participants', blob);
+        try {
+          const blob = new Blob([payload], { type: 'application/json' });
+          navigator.sendBeacon('/api/room-participants', blob);
+        } catch {}
+        // Always schedule a fallback fetch in case the beacon is dropped.
+        setTimeout(() => {
+          if (!leaveInFlightRef.current) {
+            leaveInFlightRef.current = fetch('/api/room-participants', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: payload,
+              keepalive: true as any,
+            })
+              .catch(() => {})
+              .then(() => { leaveInFlightRef.current = null; })
+              .finally(async () => {
+                // After ensuring the leave reached the server, fetch authoritative counts and broadcast locally
+                try {
+                  const res = await fetch('/api/room-participants');
+                  if (res.ok) {
+                    const data = await res.json();
+                    if (typeof window !== 'undefined') {
+                      window.dispatchEvent(new CustomEvent('vocably:participantCounts', { detail: data.rooms || {} }));
+                    }
+                  }
+                } catch (e) {}
+              });
+          }
+        }, 700);
         return;
       }
     } catch {}
@@ -404,6 +431,8 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
         if (n === null) return;
         // Update local UI
         setParticipantCount(n);
+        // If the local user left while we were reading the count, skip sending to avoid races
+        if (hasLeftRef.current) return;
         // Send authoritative count to server (use 'set' action)
         try {
           await fetch('/api/room-participants', {
