@@ -670,11 +670,11 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
         
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 6, color: '#bdbdbd', fontSize: 13, marginBottom: 8, flexWrap: 'nowrap' }}>
             {startsAt && notStarted ? (
-              (() => {
+                (() => {
                 const diff = Math.max(0, startsAt - now);
-                const hrs = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
+                const hrs = Math.floor((diff % 86400000) / 3600000);
                 const mins = Math.floor((diff % 3600000) / 60000);
-                const secs = Math.floor((diff % 60000) / 1000);
                 const dt = new Date(startsAt);
                 const pad = (n: number) => n.toString().padStart(2, '0');
                 const month = dt.getMonth() + 1;
@@ -686,6 +686,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
                 const ampm = hours >= 12 ? 'PM' : 'AM';
                 hours = hours % 12 || 12;
                 const formatted = `${month}/${day}/${year}, ${hours}:${minutes}:${seconds} ${ampm}`;
+                const timeRemaining = days > 0 ? `${days}d ${hrs}h` : (hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`);
                 return (
                   <span
                     style={{
@@ -699,7 +700,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
                     }}
                     title={`Starts at ${new Date(startsAt).toLocaleString()}`}
                   >
-                    Starts in {hrs > 0 ? `${hrs}h ` : ''}{mins}m {secs}s • Starts at {formatted}
+                    Starts in {timeRemaining} • Starts at {formatted}
                   </span>
                 );
               })()
