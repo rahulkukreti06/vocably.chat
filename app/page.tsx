@@ -1202,6 +1202,9 @@ export default function Page() {
       )}
   {/* DeepSeek chatbot widget (fixed, appears above the scroll FAB) */}
   {/* DeepSeekChatbot intentionally omitted here to avoid build-time identifier errors when the component is missing. Re-add when available. */}
+       <footer role="contentinfo" style={{ textAlign: 'center', padding: '18px 8px', color: '#bdbdbd', fontSize: 13, marginTop: 24 }}>
+    <div> © 2025 Vocably — All rights reserved.</div>
+  </footer>
   <ScrollToTopBottomButton />
       <WhatsAppCommunityModal 
         isOpen={showWhatsAppModal}
