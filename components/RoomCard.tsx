@@ -686,7 +686,20 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
                 const ampm = hours >= 12 ? 'PM' : 'AM';
                 hours = hours % 12 || 12;
                 const formatted = `${month}/${day}/${year}, ${hours}:${minutes}:${seconds} ${ampm}`;
-                const timeRemaining = days > 0 ? `${days}d ${hrs}h` : (hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`);
+                let timeRemaining: string;
+                if (days > 0) {
+                  timeRemaining = `${days}d ${hrs}h`;
+                } else if (hrs > 0) {
+                  timeRemaining = `${hrs}h ${mins}m`;
+                } else {
+                  // less than an hour: show minutes+seconds, and switch to seconds-only for the final minute
+                  const secs = Math.max(0, Math.floor((diff % 60000) / 1000));
+                  if (mins > 0) {
+                    timeRemaining = `${mins}m ${secs}s`;
+                  } else {
+                    timeRemaining = `${secs}s`;
+                  }
+                }
                 return (
                   <span
                     style={{
