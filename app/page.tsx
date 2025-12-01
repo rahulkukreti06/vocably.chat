@@ -486,8 +486,17 @@ export default function Page() {
       }, delay);
     }
 
-    // Instantly join the newly created room
-    router.push(`/rooms/${newRoom.id}`);
+       // Instantly join the newly created room unless it's scheduled
+    if (!newRoom.scheduled_at) {
+      router.push(`/rooms/${newRoom.id}`);
+    } else {
+      // For scheduled rooms, do not auto-join. Notify the creator instead.
+      try {
+        toast.success('Scheduled room created you can join when it starts.');
+      } catch (e) {
+        // fallback no-op if toast fails
+      }
+    }
 
   // Notify all clients via WebSocket (real-time update)
     try {
