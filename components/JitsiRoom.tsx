@@ -90,6 +90,23 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
   };
 
   useEffect(() => {
+    // Helper to sanitize the meeting name used by Jitsi.
+    // Keep the original `subject`/`roomName` for display in the UI, but
+    // transform the value passed to Jitsi to remove/replace characters
+    // that break room creation (e.g. apostrophes).
+    function sanitizeForJitsi(name: string | undefined | null) {
+      if (!name) return '';
+      try {
+        return name
+          .normalize('NFKD')
+          .replace(/['"`]/g, '') // remove quotes/apostrophes
+          .replace(/[^A-Za-z0-9-_]/g, '-') // replace other chars with hyphen
+          .replace(/-+/g, '-') // collapse multiple hyphens
+          .replace(/^-|-$/g, ''); // trim leading/trailing hyphens
+      } catch (e) {
+        return name.replace(/['"`]/g, '').replace(/[^A-Za-z0-9-_]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+      }
+    }
     // Aggressively auto-click "Join in browser" on mobile pre-join screen
     let joinObserver: MutationObserver | null = null;
 
@@ -137,7 +154,9 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
 
     const domain = 'api.vocably.chat'; // Use domain without port (nginx will proxy)
     const options = {
-      roomName: subject || roomName, // Use actual room name (subject) instead of room ID
+      // Use a sanitized name for the Jitsi meeting id. Keep original `subject`
+      ///`roomName` untouched for display elsewhere.
+      roomName: sanitizeForJitsi(subject || roomName) || sanitizeForJitsi(roomName),
       parentNode: jitsiContainerRef.current,
       width: '100%',
       // Use container-driven sizing; we'll manage height dynamically for mobile correctness
