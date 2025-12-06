@@ -77,6 +77,13 @@ export default function BlogPage() {
             href="/blog/how-to-meet-new-people-online-2025"
             imageSrc="/how-to-make-friends-online.jpg"
           />
+          <CardSmall
+            category="Think"
+            title="Why Talking to Strangers Makes You Smarter (Backed by Science)"
+            excerpt="Dec 4, 2025 · Written by Rahul Kukreti"
+            href="/blog/why-talking-to-strangers"
+            imageSrc="https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=1200&q=80"
+          />
          
         </div>
       </main>
