@@ -58,6 +58,19 @@ export default function WhyTalkingToStrangersPage() {
         // use dangerouslySetInnerHTML so the server and client output match exactly
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      {/* Inline page-specific override to ensure mobile typography changes take effect immediately */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media (max-width: 580px) {
+          .${styles.title} { font-size: 36px !important; }
+          .${styles.meta} { font-size: 15px !important; }
+          .${styles.subtitle} { font-size: 16px !important; }
+          .${styles.post} { font-size: 19px !important; line-height: 2 !important; }
+          .${styles['post']} h2 { font-size: 24px !important; }
+          .${styles['post']} h3 { font-size: 20px !important; }
+          .${styles['post']} li { font-size: 19px !important; }
+          .${styles['post']} li::marker { color: var(--text) !important; }
+        }
+      ` }} />
       <BlogHeader />
 
       <main className={styles.main}>
