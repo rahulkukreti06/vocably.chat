@@ -105,16 +105,17 @@
 }
 
 @media (max-width: 580px) {
-  .title { font-size: 34px; }
-  .subtitle { font-size: 15.5px; padding: 0 10px; }
+  .title { font-size: 36px; }
+  .subtitle { font-size: 16px; padding: 0 10px; }
   .meta { font-size: 15px; }
   .main { padding: 28px 12px; }
 
-  /* Larger readable body and list sizes on small screens */
-  .post { font-size: 18px; line-height: 1.95; }
-  .post h2 { font-size: 22px; }
-  .post h3 { font-size: 18px; }
-  .post li { font-size: 18px; }
+  /* Small-screen: slightly smaller paragraph text for compactness,
+     but keep headings and list items larger for readability */
+  .post { font-size: 16px; line-height: 1.9; }
+  .post h2 { font-size: 24px; }
+  .post h3 { font-size: 20px; }
+  .post li { font-size: 19px; }
 
   /* Reinforce marker and text color on small screens */
   .post, .post * { color: var(--text) !important; }
