@@ -64,9 +64,11 @@ export default function WhyTalkingToStrangersPage() {
           .${styles.title} { font-size: 36px !important; }
           .${styles.meta} { font-size: 15px !important; }
           .${styles.subtitle} { font-size: 16px !important; }
-          .${styles.post} { font-size: 19px !important; line-height: 2 !important; }
+          /* paragraph body slightly reduced for compactness */
+          .${styles.post} { font-size: 16px !important; line-height: 1.9 !important; }
           .${styles['post']} h2 { font-size: 24px !important; }
           .${styles['post']} h3 { font-size: 20px !important; }
+          /* keep points/list items larger than body text */
           .${styles['post']} li { font-size: 19px !important; }
           .${styles['post']} li::marker { color: var(--text) !important; }
         }
