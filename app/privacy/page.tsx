@@ -9,17 +9,27 @@ export default function PrivacyPolicy() {
     <div className="min-h-screen w-full bg-[#061018] text-gray-100 py-14 px-5 sm:px-8">
       {/* subtle pattern */}
       <div className="pointer-events-none fixed inset-0 opacity-[0.08] [background-image:radial-gradient(circle_at_1px_1px,#ffffff_0.6px,transparent_0)] [background-size:26px_26px]" />
-  <div className="relative max-w-5xl mx-auto text-left">
+      <div className="relative max-w-5xl mx-auto text-left">
         <Link href="/" className="inline-flex items-center text-emerald-400 hover:text-emerald-300 transition-colors mb-10">
           <ArrowLeft size={18} className="mr-2" /> Back to Home
         </Link>
-        <header className="mb-12">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#ffe066]">Vocably Privacy Policy</h1>
-          <p className="mt-2 text-sm text-gray-400">Last updated: August 12, 2025</p>
-          <div className="mt-4 h-px w-full bg-gradient-to-r from-[#ffe066] via-transparent to-transparent" />
-        </header>
 
-  <article className="text-[15.5px] leading-relaxed space-y-12 font-[450] text-left">
+        <main style={{ padding: '40px 20px' }}>
+          <style>{`
+            .post-title { font-size: 42px; font-weight: 900; text-align: center; margin-top: 0; }
+            @media (max-width: 580px) {
+              .post-title { font-size: 30px !important; }
+            }
+          `}</style>
+
+          <header className="mb-6" style={{ textAlign: 'center' }}>
+            <h1 className="post-title text-3xl sm:text-4xl font-bold tracking-tight text-[#ffe066]">Vocably Privacy Policy</h1>
+            <p className="mt-2 text-sm text-gray-400">Last updated: August 12, 2025</p>
+          </header>
+
+          <div className="post-content" style={{ maxWidth: 980, margin: '12px auto 0', display: 'flex', flexDirection: 'column', gap: 22 }}>
+
+            <article className="text-[15.5px] leading-relaxed space-y-12 font-[450] text-left">
           <section>
             <h2 className="text-xl font-semibold text-[#ffe066] mb-2">Introduction</h2>
             <p>
@@ -126,11 +136,32 @@ export default function PrivacyPolicy() {
             <section>
               <h2 className="text-xl font-semibold text-[#ffe066] mb-2">Contact Us</h2>
               <p className="mb-3">Questions or concerns about privacy?</p>
-              <a href="mailto:vocably.chat@gmail.com" className="inline-flex items-center text-emerald-400 hover:text-emerald-300 font-medium">team@vocably.chat</a>
+              <a href="mailto:team@vocably.chat" className="inline-flex items-center text-emerald-400 hover:text-emerald-300 font-medium">team@vocably.chat</a>
             </section>
-        </article>
+            </article>
 
-        <footer className="mt-16 pt-6 text-xs text-gray-500 border-t border-white/5">© {new Date().getFullYear()} Vocably. All rights reserved.</footer>
+            <footer style={{ maxWidth: 980, margin: '28px auto 0', padding: '24px 8px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ color: 'inherit', fontWeight: 700 }}>Thanks for reading</div>
+                  <div style={{ color: 'inherit' }}>If you have privacy questions, please contact the address below.</div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
+                  <div style={{ color: 'inherit', fontSize: 13 }}>&copy; {new Date().getFullYear()} Vocably. All rights reserved.</div>
+
+                  <nav aria-label="Footer navigation" style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <Link href="/" style={{ color: '#066cf2ff', textDecoration: 'none' }}>Home</Link>
+                    <Link href="/blog" style={{ color: '#066cf2ff', textDecoration: 'none' }}>Blog</Link>
+                    <Link href="/blog/about" style={{ color: '#066cf2ff', textDecoration: 'none' }}>About</Link>
+                    <Link href="/privacy" style={{ color: '#066cf2ff', textDecoration: 'none' }}>Privacy</Link>
+                    <a href="mailto:team@vocably.chat" style={{ color: '#066cf2ff', textDecoration: 'none' }}>Contact</a>
+                  </nav>
+                </div>
+              </div>
+            </footer>
+          </div>
+        </main>
       </div>
     </div>
   );
