@@ -12,16 +12,43 @@ export default function CommunityRightPanel() {
   const [totalPosts, setTotalPosts] = useState<number | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const raw = localStorage.getItem('vocably_community_join');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (typeof parsed.members === 'number') setMembers(parsed.members);
-        if (typeof parsed.joined === 'boolean') setJoined(parsed.joined);
+    let mounted = true;
+    async function loadMembers() {
+      try {
+        const userId = session?.user ? (session.user.id ?? session.user.email) : null;
+        const url = userId ? `/api/community-members?userId=${encodeURIComponent(String(userId))}` : '/api/community-members';
+        const res = await fetch(url);
+        const data = await res.json().catch(() => null);
+        if (!mounted) return;
+        if (res.ok && data && typeof data.members === 'number') {
+          setMembers(data.members);
+          if (typeof data.joined === 'boolean') setJoined(!!data.joined);
+        } else {
+          // fallback to localStorage
+          try {
+            const raw = localStorage.getItem('vocably_community_join');
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (typeof parsed.members === 'number') setMembers(parsed.members);
+              if (typeof parsed.joined === 'boolean') setJoined(parsed.joined);
+            }
+          } catch (e) { console.error('local fallback parse error', e); }
+        }
+      } catch (e) {
+        console.error('Failed to fetch /api/community-members', e);
+        try {
+          const raw = localStorage.getItem('vocably_community_join');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (typeof parsed.members === 'number') setMembers(parsed.members);
+            if (typeof parsed.joined === 'boolean') setJoined(parsed.joined);
+          }
+        } catch (e) { console.error('local fallback parse error', e); }
       }
-    } catch (e) {}
-  }, []);
+    }
+    loadMembers();
+    return () => { mounted = false; };
+  }, [session]);
 
   useEffect(() => {
     let mounted = true;
@@ -58,13 +85,36 @@ export default function CommunityRightPanel() {
       return;
     }
     const nextJoined = !joined;
-    const nextMembers = nextJoined ? members + 1 : Math.max(0, members - 1);
-    setJoined(nextJoined);
-    setMembers(nextMembers);
-    try {
-      localStorage.setItem('vocably_community_join', JSON.stringify({ joined: nextJoined, members: nextMembers }));
+    (async () => {
+      try {
+        const body = {
+          action: nextJoined ? 'join' : 'leave',
+          userId: session.user.id ?? session.user.email,
+          userName: session.user.name ?? null,
+          userEmail: session.user.email ?? null,
+          userImage: session.user.image ?? null
+        };
+        const res = await fetch('/api/community-members', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const data = await res.json().catch(() => null);
+        console.log('community-members response', res.status, data);
+        if (res.ok && data && typeof data.members === 'number') {
+          setJoined(!!data.joined);
+          setMembers(data.members);
+          try { localStorage.setItem('vocably_community_join', JSON.stringify({ joined: !!data.joined, members: data.members })); } catch (e) {}
+          try { window.dispatchEvent(new CustomEvent('vocably_join_changed')); } catch (e) {}
+          return;
+        }
+      } catch (err) {
+        console.error('Error calling /api/community-members:', err);
+      }
+
+      // fallback to localStorage behavior
+      const nextMembers = nextJoined ? members + 1 : Math.max(0, members - 1);
+      setJoined(nextJoined);
+      setMembers(nextMembers);
+      try { localStorage.setItem('vocably_community_join', JSON.stringify({ joined: nextJoined, members: nextMembers })); } catch (e) {}
       try { window.dispatchEvent(new CustomEvent('vocably_join_changed')); } catch (e) {}
-    } catch (e) {}
+    })();
   }
 
   const asideRef = useRef<HTMLElement | null>(null);
