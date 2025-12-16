@@ -95,20 +95,7 @@ export default function Page() {
   const { data: session } = useSession();
 
   // Show WhatsApp modal after 30 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      // Check if we've shown the modal today
-      const lastShown = localStorage?.getItem('whatsappModalLastShown');
-      const today = new Date().toDateString();
-      
-      if (!lastShown || lastShown !== today) {
-        setShowWhatsAppModal(true);
-        localStorage?.setItem('whatsappModalLastShown', today);
-      }
-    }, 30000); // 30 seconds delay
-
-    return () => clearTimeout(timer);
-  }, []);
+  // Automatic WhatsApp modal display removed to avoid unexpected popups.
 
   // Custom error modal for sign-in required
   const [showSignInError, setShowSignInError] = useState(false);
@@ -486,7 +473,7 @@ export default function Page() {
       }, delay);
     }
 
-       // Instantly join the newly created room unless it's scheduled
+    // Instantly join the newly created room unless it's scheduled
     if (!newRoom.scheduled_at) {
       router.push(`/rooms/${newRoom.id}`);
     } else {
@@ -565,20 +552,7 @@ export default function Page() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [mobileProfileMenuOpen]);
 
-  // Show WhatsApp modal after 30 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const lastShown = localStorage.getItem('whatsappModalLastShown');
-      const today = new Date().toDateString();
-      
-      if (!lastShown || lastShown !== today) {
-        setShowWhatsAppModal(true);
-        localStorage.setItem('whatsappModalLastShown', today);
-      }
-    }, 30000); // 30 seconds delay
-
-    return () => clearTimeout(timer);
-  }, []);
+  // Automatic WhatsApp modal display removed to avoid unexpected popups.
 
   return (
     <>
@@ -840,11 +814,9 @@ export default function Page() {
                     </span>
                   </div>
 
-                  {/* Privacy Policy Button (with icon, internal navigation to /privacy) */}
+                  {/* Community Button (replaces Privacy Policy) */}
                   <Link
-                    href="/privacy"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="/community"
                     style={{
                       ...desktopActionStyle('transparent', '#ffe066', '#ffe066'),
                       textDecoration: 'none',
@@ -853,23 +825,13 @@ export default function Page() {
                       justifyContent: 'center',
                       fontWeight: 700
                     }}
-                    aria-label="Privacy Policy"
+                    aria-label="Community"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      style={{ marginRight: 6 }}
-                    >
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}>
+                      <circle cx="12" cy="8" r="3" />
+                      <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
                     </svg>
-                    Privacy Policy
+                    Community
                   </Link>
                   {/* Reddit */}
                   <a
@@ -1211,7 +1173,7 @@ export default function Page() {
       )}
   {/* DeepSeek chatbot widget (fixed, appears above the scroll FAB) */}
   {/* DeepSeekChatbot intentionally omitted here to avoid build-time identifier errors when the component is missing. Re-add when available. */}
-       <footer role="contentinfo" style={{ textAlign: 'center', padding: '18px 8px', color: '#bdbdbd', fontSize: 13, marginTop: 24 }}>
+  <footer role="contentinfo" style={{ textAlign: 'center', padding: '18px 8px', color: '#bdbdbd', fontSize: 13, marginTop: 24 }}>
     <div> © 2025 Vocably — All rights reserved.</div>
   </footer>
   <ScrollToTopBottomButton />
