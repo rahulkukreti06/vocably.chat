@@ -286,7 +286,33 @@ export const Header: React.FC<HeaderProps> = ({ onCreateRoomClick, onProfileClic
           {menuOpen && (
             <div className="header-mobile-menu">
               <Link 
-                href="/privacy" 
+                href="/community" 
+                className="header-btn"
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.5rem',
+                  color: '#10b981',
+                  border: '1px solid #10b98140',
+                  marginBottom: '0.5rem',
+                  textDecoration: 'none',
+                  width: '100%',
+                  textAlign: 'center',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="8" r="3" />
+                  <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
+                </svg>
+                Community
+              </Link>
+              <Link 
+                href="/privacy"
                 className="header-btn"
                 onClick={() => setMenuOpen(false)}
                 style={{
