@@ -82,6 +82,31 @@ export default function CommunityPage() {
   const [membersState, setMembersState] = useState<number>(0);
 
   useEffect(() => {
+    // Debug: log when About modal is opened/closed and watch for global clicks
+    // This helps diagnose why the modal may be disappearing unexpectedly on mobile.
+    let clickHandler: ((e: Event) => void) | null = null;
+    try {
+      if (showRightPanel && typeof window !== 'undefined') {
+        console.log('[debug] About modal opened');
+        clickHandler = (e: Event) => {
+          try {
+            // log basic event info without spamming too much
+            console.log('[debug] window click event while About open:', { type: e.type, target: (e.target as any)?.tagName });
+          } catch (err) {}
+        };
+        window.addEventListener('click', clickHandler);
+      } else {
+        console.log('[debug] About modal closed');
+      }
+    } catch (err) {}
+    return () => {
+      try {
+        if (clickHandler) window.removeEventListener('click', clickHandler);
+      } catch (e) {}
+    };
+  }, [showRightPanel]);
+  
+  useEffect(() => {
     let mounted = true;
     function onWindowClick() {
       setOpenMenuId(null);
@@ -308,7 +333,7 @@ export default function CommunityPage() {
                 </button>
                 <button
                   className="mobile-action-btn"
-                  onClick={() => setShowRightPanel(true)}
+                  onClick={(e) => { e.stopPropagation(); setShowRightPanel(true); }}
                 >
                   About
                 </button>
