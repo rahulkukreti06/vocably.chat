@@ -7,6 +7,11 @@ import CommunityRightPanel from "./CommunityRightPanel";
 export default function AboutPopup({ onClose }: { onClose: () => void }) {
 	if (typeof document === 'undefined') return null;
 
+	React.useEffect(() => {
+		console.log('[debug] AboutPopup mounted (portal)');
+		return () => console.log('[debug] AboutPopup unmounted (portal)');
+	}, []);
+
 	const overlay = (
 		<div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 9999 }} onClick={onClose}>
 			<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 16 }} onClick={(e) => e.stopPropagation()}>
