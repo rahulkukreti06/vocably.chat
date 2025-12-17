@@ -232,12 +232,7 @@ export default function CommunityRightPanel() {
           </div>
         </div>
 
-        <div style={{ marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: 12 }}>
-          <div style={{ color: '#9ca3af', fontSize: 12, fontWeight: 700 }}>COMMUNITY BOOKMARKS</div>
-          <div style={{ marginTop: 8 }}>
-            <button style={{ width: '100%', padding: '8px 12px', borderRadius: 999, background: '#111', border: '1px solid rgba(255,255,255,0.03)', color: '#fff', fontWeight: 700 }}>Links ▾</button>
-          </div>
-        </div>
+        {/* Community bookmarks removed per UI update */}
 
         <div style={{ marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: 12 }}>
           <div style={{ color: '#9ca3af', fontSize: 12, fontWeight: 700 }}>COMMUNITY RULES</div>
