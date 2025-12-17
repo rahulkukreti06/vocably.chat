@@ -305,19 +305,48 @@ export default function CommunityPage() {
                 </button>
                 <button
                   className="mobile-action-btn"
-                  onClick={() => {
+                  onClick={async () => {
                     try {
                       if (!session?.user) {
                         signIn();
                         return;
                       }
-                      const raw = localStorage.getItem('vocably_community_join');
-                      let parsed = { joined: false, members: 0 } as any;
-                      if (raw) parsed = JSON.parse(raw);
-                      const nextJoined = !parsed.joined;
-                      const nextMembers = nextJoined ? (parsed.members || 0) + 1 : Math.max(0, (parsed.members || 0) - 1);
-                      localStorage.setItem('vocably_community_join', JSON.stringify({ joined: nextJoined, members: nextMembers }));
-                      window.dispatchEvent(new CustomEvent('vocably_join_changed'));
+
+                      const nextJoined = !joinedState;
+                      const body = {
+                        action: nextJoined ? 'join' : 'leave',
+                        userId: session.user.id ?? session.user.email,
+                        userName: session.user.name ?? null,
+                        userEmail: session.user.email ?? null,
+                        userImage: session.user.image ?? null
+                      };
+
+                      try {
+                        const res = await fetch('/api/community-members', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                        const data = await res.json().catch(() => null);
+                        if (res.ok && data && typeof data.members === 'number') {
+                          setJoinedState(!!data.joined);
+                          setMembersState(data.members);
+                          try { localStorage.setItem('vocably_community_join', JSON.stringify({ joined: !!data.joined, members: data.members })); } catch (e) {}
+                          try { window.dispatchEvent(new CustomEvent('vocably_join_changed')); } catch (e) {}
+                          return;
+                        }
+                      } catch (err) {
+                        console.error('Error calling /api/community-members:', err);
+                      }
+
+                      // fallback to localStorage behavior if API fails
+                      try {
+                        const raw = localStorage.getItem('vocably_community_join');
+                        let parsed = { joined: joinedState, members: membersState } as any;
+                        if (raw) parsed = JSON.parse(raw);
+                        const nextJoinedLocal = !parsed.joined;
+                        const nextMembersLocal = nextJoinedLocal ? (parsed.members || 0) + 1 : Math.max(0, (parsed.members || 0) - 1);
+                        setJoinedState(nextJoinedLocal);
+                        setMembersState(nextMembersLocal);
+                        localStorage.setItem('vocably_community_join', JSON.stringify({ joined: nextJoinedLocal, members: nextMembersLocal }));
+                        try { window.dispatchEvent(new CustomEvent('vocably_join_changed')); } catch (e) {}
+                      } catch (e) {}
                     } catch (e) {}
                   }}
                 >
