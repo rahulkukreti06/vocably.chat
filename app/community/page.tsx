@@ -82,12 +82,6 @@ export default function CommunityPage() {
   const [joinedState, setJoinedState] = useState<boolean>(false);
   const [membersState, setMembersState] = useState<number>(0);
 
-  function openAbout(e?: any) {
-    try { e?.stopPropagation(); } catch (e) {}
-    console.log('[debug] About button activated', e?.type ?? 'unknown');
-    setShowRightPanel(true);
-  }
-
   useEffect(() => {
     let mounted = true;
     function onWindowClick() {
@@ -315,8 +309,8 @@ export default function CommunityPage() {
                 </button>
                 <button
                   className="mobile-action-btn"
-                  onClick={openAbout}
-                  onTouchStart={openAbout}
+                  onClick={(e) => { e.stopPropagation(); setShowRightPanel(true); }}
+                  onTouchStart={(e) => { e.stopPropagation(); setShowRightPanel(true); }}
                 >
                   About
                 </button>
