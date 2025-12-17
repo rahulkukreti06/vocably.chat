@@ -189,10 +189,10 @@ export default function PostDetailPage() {
                       ) : (
                         <div style={{ width: 28, height: 28, borderRadius: 999, background: 'rgba(255,255,255,0.03)' }} />
                       )}
-                      <div style={{ color: '#9ca3af', fontSize: 13, fontWeight: 700 }}>{post.created_by_name ?? post.created_by ?? 'Anonymous'} · {timeAgo(post.created_at)}</div>
+                      <div className="post-author" style={{ color: '#9ca3af', fontSize: 13, fontWeight: 700 }}>{post.created_by_name ?? post.created_by ?? 'Anonymous'} · {timeAgo(post.created_at)}</div>
                     </div>
 
-                    {post.title ? <h2 style={{ color: '#ffe066', margin: '6px 0 12px', fontSize: 17, fontWeight: 600 }}>{post.title}</h2> : null}
+                    {post.title ? <h2 className="community-post-title" style={{ color: '#ffe066', margin: '6px 0 12px', fontSize: 17, fontWeight: 600 }}>{post.title}</h2> : null}
                     {/* Escape HTML and preserve newlines for post content */}
                     <div
                       style={{ color: '#cbd5e1', fontSize: 15, lineHeight: 1.6 }}
@@ -235,9 +235,9 @@ export default function PostDetailPage() {
                               ) : (
                                 <div style={{ width: 20, height: 20, borderRadius: 999, background: 'rgba(255,255,255,0.03)' }} />
                               )}
-                              <div style={{ color: '#9ca3af', fontSize: 12, fontWeight: 700 }}>{c.created_by_name ?? c.created_by ?? 'Anonymous'} · {timeAgo(c.created_at)}</div>
+                              <div className="comment-author" style={{ color: '#9ca3af', fontSize: 12, fontWeight: 700 }}>{c.created_by_name ?? c.created_by ?? 'Anonymous'} · {timeAgo(c.created_at)}</div>
                             </div>
-                            <div style={{ color: '#cbd5e1', fontSize: 14 }} dangerouslySetInnerHTML={{ __html: (String(c.content || '')
+                            <div className="comment-content" style={{ color: '#cbd5e1', fontSize: 14 }} dangerouslySetInnerHTML={{ __html: (String(c.content || '')
                               .replace(/&/g, '&amp;')
                               .replace(/</g, '&lt;')
                               .replace(/>/g, '&gt;')
@@ -323,6 +323,11 @@ export default function PostDetailPage() {
             }
             /* ensure comment items don't introduce extra horizontal padding */
             .community-post .comment-item, .community-post > div { box-sizing: border-box; }
+            /* Tune topic and comment sizes on small screens (slightly smaller) */
+            .community-post-title { font-size: 19px !important; }
+            .community-post .post-author { font-size: 13px !important; }
+            .community-post .comment-author { font-size: 12px !important; }
+            .community-post .comment-content { font-size: 14px !important; }
           }
           /* Disable hover effect on post detail page */
           .community-post { transition: none !important; background: #121212; }
