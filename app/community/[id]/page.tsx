@@ -193,7 +193,17 @@ export default function PostDetailPage() {
                     </div>
 
                     {post.title ? <h2 style={{ color: '#ffe066', margin: '6px 0 12px', fontSize: 17, fontWeight: 600 }}>{post.title}</h2> : null}
-                    <div style={{ color: '#cbd5e1', fontSize: 15, lineHeight: 1.6 }}>{post.content}</div>
+                    {/* Escape HTML and preserve newlines for post content */}
+                    <div
+                      style={{ color: '#cbd5e1', fontSize: 15, lineHeight: 1.6 }}
+                      dangerouslySetInnerHTML={{ __html: (String(post.content || '')
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#39;')
+                        .replace(/\r?\n/g, '<br/>')) }}
+                    />
 
                     <div style={{ marginTop: 12, display: 'flex', gap: 12, alignItems: 'center' }}>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -227,7 +237,13 @@ export default function PostDetailPage() {
                               )}
                               <div style={{ color: '#9ca3af', fontSize: 12, fontWeight: 700 }}>{c.created_by_name ?? c.created_by ?? 'Anonymous'} · {timeAgo(c.created_at)}</div>
                             </div>
-                            <div style={{ color: '#cbd5e1', fontSize: 14 }}>{c.content}</div>
+                            <div style={{ color: '#cbd5e1', fontSize: 14 }} dangerouslySetInnerHTML={{ __html: (String(c.content || '')
+                              .replace(/&/g, '&amp;')
+                              .replace(/</g, '&lt;')
+                              .replace(/>/g, '&gt;')
+                              .replace(/"/g, '&quot;')
+                              .replace(/'/g, '&#39;')
+                              .replace(/\r?\n/g, '<br/>')) }} />
                           </div>
                         ))}
 
