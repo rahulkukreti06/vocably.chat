@@ -306,9 +306,27 @@ export default function PostDetailPage() {
             /* Strong override for small screens */
             .community-title-h1 { font-size: 20px !important; margin-top: 18px; letter-spacing: 0.4px; line-height: 1 }
           }
-          /* Post hover color-only effect */
-          .community-post { transition: background-color 120ms ease; background: #121212; }
-          .community-post:hover { background: #252525; }
+          /* Make post detail and its comments full-bleed on small screens (touch screen edges) */
+          @media (max-width: 640px) {
+            .community-main-wrapper { max-width: 100vw; padding-left: 0; padding-right: 0; }
+            .community-post {
+              position: relative;
+              left: 50%;
+              right: 50%;
+              margin-left: -50vw;
+              margin-right: -50vw;
+              width: 100vw;
+              border-radius: 0 !important;
+              padding-left: 16px !important;
+              padding-right: 16px !important;
+              box-sizing: border-box;
+            }
+            /* ensure comment items don't introduce extra horizontal padding */
+            .community-post .comment-item, .community-post > div { box-sizing: border-box; }
+          }
+          /* Disable hover effect on post detail page */
+          .community-post { transition: none !important; background: #121212; }
+          .community-post:hover { background: inherit !important; }
         ` }} />
       </div>
     </div>
