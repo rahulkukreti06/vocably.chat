@@ -219,6 +219,17 @@ export default function CommunityPage() {
     }
   }
 
+  function openAbout() {
+    try {
+      // open the standalone About popup on small and medium screens (phones/tablets)
+      if (typeof window !== 'undefined' && window.innerWidth <= 1024) {
+        setShowRightPanel(true);
+        return;
+      }
+    } catch (e) {}
+    // on larger screens, keep existing behavior (Desktop right panel remains visible)
+  }
+
   async function addComment(postId: string, commentText: string) {
     if (!commentText.trim()) return;
 
@@ -309,7 +320,7 @@ export default function CommunityPage() {
                 </button>
                 <button
                   className="mobile-action-btn"
-                  onClick={() => setShowRightPanel(true)}
+                  onClick={openAbout}
                 >
                   About
                 </button>
