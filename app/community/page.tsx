@@ -47,11 +47,20 @@ function timeAgo(iso?: string | null) {
 
 function PostBody({ content }: { content: string }) {
   if (!content) return null;
+  // escape HTML and preserve newlines as <br/> so user formatting (bullets/newlines)
+  // is shown in posts while avoiding raw HTML injection.
+  const escapeHtml = (str: string) =>
+    str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/\'/g, '&#39;');
+
+  const html = escapeHtml(content).replace(/\r?\n/g, '<br/>');
+
   return (
     <div>
-      <div className="post-clamp" style={{ color: '#cbd5e1', marginTop: 6, fontSize: 'var(--post-body-size, 15px)', lineHeight: 1.5 }}>
-        {content}
-      </div>
+      <div
+        className="post-clamp"
+        style={{ color: '#cbd5e1', marginTop: 6, fontSize: 'var(--post-body-size, 15px)', lineHeight: 1.5 }}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
     </div>
   );
 }
