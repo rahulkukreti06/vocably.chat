@@ -486,6 +486,21 @@ export default function CommunityPage() {
 
               <div className="desktop-right-wrap">
                 <CommunityRightPanel />
+                {/* Mobile drawer for About/right panel */}
+                {showRightPanel && (
+                  <>
+                    <div className="mobile-right-overlay" onClick={() => setShowRightPanel(false)} />
+                    <div className="mobile-right-drawer" role="dialog" aria-modal="true">
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                        <div style={{ color: '#fff', fontWeight: 800 }}>About</div>
+                        <button onClick={() => setShowRightPanel(false)} style={{ background: 'transparent', border: 'none', color: '#9ca3af', fontSize: 16 }}>Close</button>
+                      </div>
+                      <div style={{ padding: 12 }}>
+                        <CommunityRightPanel />
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
