@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import CommunityHeader from "../../components/CommunityHeader";
 import CommunitySidePanel from "../../components/CommunitySidePanel";
 import CommunityRightPanel from "../../components/CommunityRightPanel";
+import AboutPopup from "../../components/AboutPopup";
 import { supabase } from "../../lib/supabaseClient";
 
 type Post = {
@@ -81,31 +82,6 @@ export default function CommunityPage() {
   const [joinedState, setJoinedState] = useState<boolean>(false);
   const [membersState, setMembersState] = useState<number>(0);
 
-  useEffect(() => {
-    // Debug: log when About modal is opened/closed and watch for global clicks
-    // This helps diagnose why the modal may be disappearing unexpectedly on mobile.
-    let clickHandler: ((e: Event) => void) | null = null;
-    try {
-      if (showRightPanel && typeof window !== 'undefined') {
-        console.log('[debug] About modal opened');
-        clickHandler = (e: Event) => {
-          try {
-            // log basic event info without spamming too much
-            console.log('[debug] window click event while About open:', { type: e.type, target: (e.target as any)?.tagName });
-          } catch (err) {}
-        };
-        window.addEventListener('click', clickHandler);
-      } else {
-        console.log('[debug] About modal closed');
-      }
-    } catch (err) {}
-    return () => {
-      try {
-        if (clickHandler) window.removeEventListener('click', clickHandler);
-      } catch (e) {}
-    };
-  }, [showRightPanel]);
-  
   useEffect(() => {
     let mounted = true;
     function onWindowClick() {
@@ -516,19 +492,7 @@ export default function CommunityPage() {
           </div>
         </main>
 
-        {showRightPanel ? (
-          <div className="about-modal-overlay" onClick={() => setShowRightPanel(false)}>
-            <div className="about-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                <div style={{ color: '#fff', fontWeight: 800 }}>About</div>
-                <button onClick={() => setShowRightPanel(false)} style={{ background: 'transparent', border: 'none', color: '#9ca3af', fontSize: 16 }}>Close</button>
-              </div>
-              <div style={{ padding: 12 }}>
-                <CommunityRightPanel />
-              </div>
-            </div>
-          </div>
-        ) : null}
+        {showRightPanel ? <AboutPopup onClose={() => setShowRightPanel(false)} /> : null}
 
         <style dangerouslySetInnerHTML={{ __html: `
           .left-fixed { font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial }
@@ -579,11 +543,11 @@ export default function CommunityPage() {
             .community-title-h1 { font-size: 20px !important; margin-top: 18px; letter-spacing: 0.4px; line-height: 1 }
             .mobile-action-row { display: flex; justify-content: center; gap: 8px; margin-top: 20px }
             .mobile-action-btn { font-size: 13px; padding: 6px 10px; font-weight: 600; border: 1px solid rgba(255,255,255,0.12) }
-            /* About modal for small screens */
-            .about-modal-overlay { display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 1200 }
-            .about-modal { width: calc(100% - 32px); max-width: 420px; max-height: calc(100vh - 96px); overflow-y: auto; background: #000; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 1201 }
-            .about-modal .mobile-right-close, .about-modal button { color: #9ca3af }
-            .about-modal .mobile-right-close { position: relative; top: 0; right: 0; background: rgba(255,255,255,0.02); border: none; color: #fff; font-size: 16px; width: 36px; height: 36px; border-radius: 8px }
+            /* overlay for small-screen right panel */
+            .mobile-right-overlay { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 60 }
+            .mobile-right-panel-wrap { display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; z-index: 70; padding: 16px }
+            .mobile-right-panel-inner { position: relative }
+            .mobile-right-close { position: absolute; top: -10px; right: -10px; background: rgba(255,255,255,0.06); border: none; color: #fff; font-size: 18px; width: 36px; height: 36px; border-radius: 999px }
           }
           /* Small-screen adjustments for post typography */
           @media (max-width: 640px) {
