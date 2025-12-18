@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { supabase } from "../lib/supabaseClient";
+import { markNotificationsRead } from "../lib/notifications";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -21,6 +22,8 @@ export default function CommunityHeader() {
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const [showNotif, setShowNotif] = useState(false);
   const notifWrapRef = useRef<HTMLDivElement | null>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<{ posts: any[]; rooms: any[] }>({ posts: [], rooms: [] });
@@ -152,6 +155,34 @@ export default function CommunityHeader() {
     return () => document.removeEventListener('mousedown', onDocClick);
   }, [showNotif]);
 
+  // fetch notifications for logged-in user and poll periodically
+  useEffect(() => {
+    let mounted = true;
+    let poll: any = null;
+    async function load() {
+      if (!session?.user) {
+        if (mounted) {
+          setNotifications([]);
+          setUnreadCount(0);
+        }
+        return;
+      }
+      try {
+        const userId = String(session.user.id);
+        const { data } = await supabase.from('community_notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(20);
+        if (mounted) {
+          setNotifications(data || []);
+          setUnreadCount(((data as any[]) || []).filter((n: any) => !n.read).length);
+        }
+      } catch (e) {
+        console.warn('failed loading notifications', e);
+      }
+    }
+    load();
+    poll = setInterval(load, 12000);
+    return () => { mounted = false; if (poll) clearInterval(poll); };
+  }, [session?.user]);
+
   return (
     <>
       <header style={{ ...headerWrap, background: scrolled ? "#000" : headerWrap.background }}>
@@ -227,14 +258,57 @@ export default function CommunityHeader() {
                   <Link href="/community/create" className="create-btn" style={{ ...ctaBtn }}>+ Create</Link>
                 </div>
                 <div ref={notifWrapRef} style={{ position: 'relative' }}>
-                  <button aria-label="Notifications" className="notif-logo" onClick={() => { setShowNotif(true); setTimeout(() => setShowNotif(false), 1600); }}>
+                  <button aria-label="Notifications" className="notif-logo" onClick={async () => {
+                    // open popup
+                    setShowNotif((v) => !v);
+                    // if opening, mark unread as read (optimistic)
+                    if (!showNotif && notifications && notifications.length) {
+                      const unread = notifications.filter((n) => !n.read).map((n) => n.id);
+                      if (unread.length) {
+                        // optimistic update
+                        setNotifications((prev) => prev.map((n) => unread.includes(n.id) ? { ...n, read: true } : n));
+                        setUnreadCount(0);
+                        try {
+                          await markNotificationsRead(unread);
+                        } catch (e) {
+                          console.warn('mark read failed', e);
+                        }
+                      }
+                    }
+                  }}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 2a6 6 0 00-6 6v4.586L4.293 15.293A1 1 0 005 17h14a1 1 0 00.707-1.707L18 12.586V8a6 6 0 00-6-6zM12 22a2.5 2.5 0 002.45-2H9.55A2.5 2.5 0 0012 22z" />
                     </svg>
+                    {unreadCount > 0 && (
+                      <span style={{ position: 'absolute', top: 4, right: 4, background: '#ef4444', color: '#fff', borderRadius: 999, padding: '2px 6px', fontSize: 12, fontWeight: 800 }}>
+                        {unreadCount}
+                      </span>
+                    )}
                   </button>
                   {showNotif ? (
-                    <div className="notif-popup" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, background: '#0b1220', color: '#fff', padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.04)', boxShadow: '0 8px 24px rgba(2,6,23,0.6)', zIndex: 1200, fontWeight: 700, fontSize: 13 }}>
-                      Coming soon
+                    <div className="notif-popup" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, background: '#0b1220', color: '#fff', padding: '8px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.04)', boxShadow: '0 8px 24px rgba(2,6,23,0.6)', zIndex: 1200, fontWeight: 700, fontSize: 13, minWidth: 320 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+                        <div style={{ fontWeight: 800 }}>Notifications</div>
+                        <div style={{ fontSize: 12, color: '#9ca3af', fontWeight: 700 }}>{notifications.length} recent</div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 320, overflow: 'auto' }}>
+                        {notifications.length === 0 ? (
+                          <div style={{ color: '#9ca3af', fontWeight: 700 }}>No notifications</div>
+                        ) : (
+                          notifications.map((n) => (
+                            <div key={n.id} style={{ padding: 10, borderRadius: 8, background: n.read ? 'transparent' : 'rgba(255,255,255,0.02)', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                              <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(255,255,255,0.03)', display: 'grid', placeItems: 'center', fontWeight: 800 }}>{n.actor_id ? n.actor_id[0]?.toUpperCase() : 'U'}</div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ color: '#fff', fontSize: 13, fontWeight: 800 }}>
+                                  {n.type === 'comment' ? 'New comment' : (n.type || 'Notification')}
+                                </div>
+                                <div style={{ color: '#9ca3af', fontSize: 13, fontWeight: 700 }}>{String(n.data?.content || '').slice(0, 180) || '—'}</div>
+                                <div style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>{n.created_at ? new Date(n.created_at).toLocaleString() : ''}</div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
                   ) : null}
                 </div>
@@ -283,12 +357,48 @@ export default function CommunityHeader() {
 
                   {/* notification icon replaces previous search spot */}
                   <div ref={notifWrapRef} style={{ position: 'relative' }}>
-                    <button aria-label="Notifications" onClick={() => { setShowNotif(true); setTimeout(() => setShowNotif(false), 1600); }} style={{ width: 24, height: 24, display: 'grid', placeItems: 'center', borderRadius: 6, border: '2px solid #ffffff', color: '#fff', padding: 0, background: 'rgba(255,255,255,0.02)' }}>
+                    <button aria-label="Notifications" onClick={async () => {
+                      setShowNotif((v) => !v);
+                      if (!showNotif && notifications && notifications.length) {
+                        const unread = notifications.filter((n) => !n.read).map((n) => n.id);
+                        if (unread.length) {
+                          setNotifications((prev) => prev.map((n) => unread.includes(n.id) ? { ...n, read: true } : n));
+                          setUnreadCount(0);
+                          try { await markNotificationsRead(unread); } catch (e) { console.warn('mark read failed', e); }
+                        }
+                      }
+                    }} style={{ width: 24, height: 24, display: 'grid', placeItems: 'center', borderRadius: 6, border: '2px solid #ffffff', color: '#fff', padding: 0, background: 'rgba(255,255,255,0.02)' }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a6 6 0 00-6 6v4.586L4.293 15.293A1 1 0 005 17h14a1 1 0 00.707-1.707L18 12.586V8a6 6 0 00-6-6zM12 22a2.5 2.5 0 002.45-2H9.55A2.5 2.5 0 0012 22z" /></svg>
+                      {unreadCount > 0 && (
+                        <span style={{ position: 'absolute', top: -6, right: -6, background: '#ef4444', color: '#fff', borderRadius: 999, padding: '2px 6px', fontSize: 11, fontWeight: 800 }}>
+                          {unreadCount}
+                        </span>
+                      )}
                     </button>
                     {showNotif ? (
-                      <div className="notif-popup" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, background: '#0b1220', color: '#fff', padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.04)', boxShadow: '0 8px 24px rgba(2,6,23,0.6)', zIndex: 1200, fontWeight: 700, fontSize: 13 }}>
-                        Coming soon
+                      <div className="notif-popup" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, background: '#0b1220', color: '#fff', padding: '8px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.04)', boxShadow: '0 8px 24px rgba(2,6,23,0.6)', zIndex: 1200, fontWeight: 700, fontSize: 13, minWidth: 280 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+                          <div style={{ fontWeight: 800 }}>Notifications</div>
+                          <div style={{ fontSize: 12, color: '#9ca3af', fontWeight: 700 }}>{notifications.length} recent</div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 320, overflow: 'auto' }}>
+                          {notifications.length === 0 ? (
+                            <div style={{ color: '#9ca3af', fontWeight: 700 }}>No notifications</div>
+                          ) : (
+                            notifications.map((n) => (
+                              <div key={n.id} style={{ padding: 10, borderRadius: 8, background: n.read ? 'transparent' : 'rgba(255,255,255,0.02)', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                                <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(255,255,255,0.03)', display: 'grid', placeItems: 'center', fontWeight: 800 }}>{n.actor_id ? n.actor_id[0]?.toUpperCase() : 'U'}</div>
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ color: '#fff', fontSize: 13, fontWeight: 800 }}>
+                                    {n.type === 'comment' ? 'New comment' : (n.type || 'Notification')}
+                                  </div>
+                                  <div style={{ color: '#9ca3af', fontSize: 13, fontWeight: 700 }}>{String(n.data?.content || '').slice(0, 180) || '—'}</div>
+                                  <div style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>{n.created_at ? new Date(n.created_at).toLocaleString() : ''}</div>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
                       </div>
                     ) : null}
                   </div>
