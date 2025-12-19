@@ -171,8 +171,20 @@ export default function CommunityHeader() {
         const userId = String(session.user.id);
         const { data } = await supabase.from('community_notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(20);
         if (mounted) {
-          setNotifications(data || []);
-          setUnreadCount(((data as any[]) || []).filter((n: any) => !n.read).length);
+          const arr = data || [];
+          setNotifications(arr);
+          // compute unread relative to last opened time (per-user localStorage)
+          let lastOpened = 0;
+          try {
+            const key = `vocably_notifications_last_opened_${userId}`;
+            const raw = localStorage.getItem(key);
+            if (raw) lastOpened = Number(raw) || 0;
+          } catch (e) {}
+          const count = ((arr as any[]) || []).filter((n: any) => {
+            if (!n || !n.created_at) return false;
+            return new Date(n.created_at).getTime() > lastOpened;
+          }).length;
+          setUnreadCount(count);
         }
       } catch (e) {
         console.warn('failed loading notifications', e);
@@ -261,19 +273,18 @@ export default function CommunityHeader() {
                   <button aria-label="Notifications" className="notif-logo" onClick={async () => {
                     // open popup
                     setShowNotif((v) => !v);
-                    // if opening, mark unread as read (optimistic)
-                    if (!showNotif && notifications && notifications.length) {
-                      const unread = notifications.filter((n) => !n.read).map((n) => n.id);
-                      if (unread.length) {
-                        // optimistic update
-                        setNotifications((prev) => prev.map((n) => unread.includes(n.id) ? { ...n, read: true } : n));
+                    // if opening, record last-opened timestamp so badge stays hidden until new notifications arrive
+                    if (!showNotif && notifications && notifications.length && session?.user) {
+                      const userKey = `vocably_notifications_last_opened_${String(session.user.id)}`;
+                      try {
+                        localStorage.setItem(userKey, String(Date.now()));
+                      } catch (e) {}
+                        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
                         setUnreadCount(0);
-                        try {
-                          await markNotificationsRead(unread);
-                        } catch (e) {
-                          console.warn('mark read failed', e);
+                        const unread = notifications.filter((n) => !n.read).map((n) => n.id);
+                        if (unread.length) {
+                          try { await markNotificationsRead(unread); } catch (e) { console.warn('mark read failed', e); }
                         }
-                      }
                     }
                   }}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
