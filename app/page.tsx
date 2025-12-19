@@ -380,17 +380,14 @@ export default function Page() {
       scheduled_at: roomData.scheduled_at ?? null,
     };
     // Debug: log the newRoom object before inserting
-    console.log('Creating new room:', newRoom);
+    // Debug logs removed to avoid leaking data to the browser console
     // Do NOT log secrets or environment keys to the client console.
     // Final fallback for created_by (should always be a UUID or a valid provider user ID)
     if (!newRoom.created_by || typeof newRoom.created_by !== 'string' || newRoom.created_by.length < 6) {
       showSignInModal('You must be signed in with a valid account to create a room. Please sign in with your Google account to continue.');
       return false;
     }
-    console.log('Final newRoom object before insert:', newRoom);
-    // Debug: log the newRoom object and created_by before inserting
-    console.log('DEBUG: About to insert newRoom:', newRoom);
-    console.log('DEBUG: newRoom.created_by value:', newRoom.created_by);
+   // Debug logs removed to avoid leaking data to the browser console
 
     // Minimal insert for debugging
     const minimalRoom = {
@@ -416,7 +413,7 @@ export default function Page() {
     if (newRoom.scheduled_at) {
       minimalRoom.scheduled_at = newRoom.scheduled_at;
     }
-    console.log('DEBUG: Minimal insert payload:', minimalRoom);
+   // Debug logs removed to avoid leaking data to the browser console
 
     // Stricter duplicate check: fetch existing room names and compare a normalized form
     // (trim, collapse whitespace, lowercase) to avoid accidental collisions like
@@ -445,7 +442,7 @@ export default function Page() {
     }
 
     const { data, error } = await supabase.from('rooms').insert([minimalRoom]);
-    console.log('Supabase insert result:', { data, error });
+     // Supabase insert result is handled via UI feedback; debug logs removed
     if (error) {
       alert('Failed to create room: ' + error.message + '\n' + JSON.stringify(error, null, 2));
       return false;
