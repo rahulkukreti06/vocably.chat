@@ -381,8 +381,7 @@ export default function Page() {
     };
     // Debug: log the newRoom object before inserting
     console.log('Creating new room:', newRoom);
-    // Log the Supabase key being used
-    console.log('Supabase key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+    // Do NOT log secrets or environment keys to the client console.
     // Final fallback for created_by (should always be a UUID or a valid provider user ID)
     if (!newRoom.created_by || typeof newRoom.created_by !== 'string' || newRoom.created_by.length < 6) {
       showSignInModal('You must be signed in with a valid account to create a room. Please sign in with your Google account to continue.');
