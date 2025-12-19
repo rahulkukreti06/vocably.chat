@@ -87,8 +87,19 @@ export default function PostDetailPage() {
     setText("");
 
     try {
-      const { error } = await supabase.from("community_comments").insert([{ post_id: id, content: newComment.content, created_by: newComment.created_by, created_by_name: newComment.created_by_name, created_by_image: newComment.created_by_image }]);
-      if (error) console.warn('Supabase insert failed:', error.message);
+      const { data: inserted, error } = await supabase.from("community_comments").insert([{ post_id: id, content: newComment.content, created_by: newComment.created_by, created_by_name: newComment.created_by_name, created_by_image: newComment.created_by_image }]).select().single();
+      if (error) {
+        console.warn('Supabase insert failed:', error.message);
+      } else if (inserted) {
+        try {
+          if (post && post.created_by && String(post.created_by) !== String(session.user.id)) {
+            const { error: notifErr } = await supabase.from('community_notifications').insert([{ user_id: String(post.created_by), actor_id: String(session.user.id), type: 'comment', post_id: id, comment_id: inserted.id, data: { content: newComment.content }, read: false }]);
+            if (notifErr) console.warn('notification insert failed', notifErr.message);
+          }
+        } catch (e) {
+          console.warn('notification creation failed', e);
+        }
+      }
     } catch (e) {}
   }
 
