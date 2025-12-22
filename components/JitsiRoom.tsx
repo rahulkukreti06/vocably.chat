@@ -19,8 +19,11 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
   const resizeCleanupRef = useRef<(() => void) | null>(null);
   const pendingSyncTimeoutRef = useRef<any>(null);
   const [participantCount, setParticipantCount] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const participantSyncRef = useRef<NodeJS.Timeout | null>(null);
   const syncingRef = useRef(false);
+  const loadingObserverRef = useRef<MutationObserver | null>(null);
+  const loadingTimeoutRef = useRef<number | null>(null);
 
   // Decrement count once, only if actually joined
   const leaveOnce = React.useCallback(() => {
@@ -201,6 +204,57 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
     const createJitsi = () => {
       const api = new window.JitsiMeetExternalAPI(domain, options);
       apiRef.current = api;
+
+      // Show loading overlay until Jitsi injects content into our container.
+      try {
+        if (jitsiContainerRef.current) {
+          // More robust detection: wait for known prejoin DOM markers
+          const PREJOIN_SELECTORS = [
+            '.prejoin-screen', '.prejoin', '.prejoin-box', '[data-testid="prejoin"]',
+            'button[data-testid="prejoin-start-button"]', '[data-testid="join-in-browser"]',
+            '#join-in-browser', 'button[aria-label*="Join"]', '.welcome-page', 'iframe'
+          ];
+
+          const hasPrejoin = () => {
+            try {
+              return PREJOIN_SELECTORS.some(sel => !!jitsiContainerRef.current?.querySelector(sel));
+            } catch { return false; }
+          };
+
+          if (hasPrejoin()) {
+            setIsLoading(false);
+          } else {
+            const obs = new MutationObserver(() => {
+              if (!jitsiContainerRef.current) return;
+              if (hasPrejoin() || jitsiContainerRef.current.childElementCount > 0) {
+                setIsLoading(false);
+                if (loadingObserverRef.current) {
+                  loadingObserverRef.current.disconnect();
+                  loadingObserverRef.current = null;
+                }
+                if (loadingTimeoutRef.current) {
+                  clearTimeout(loadingTimeoutRef.current);
+                  loadingTimeoutRef.current = null;
+                }
+              }
+            });
+            obs.observe(jitsiContainerRef.current, { childList: true, subtree: true });
+            loadingObserverRef.current = obs;
+
+            // Fallback: don't stay loading forever — hide after 15s
+            loadingTimeoutRef.current = window.setTimeout(() => {
+              setIsLoading(false);
+              if (loadingObserverRef.current) {
+                loadingObserverRef.current.disconnect();
+                loadingObserverRef.current = null;
+              }
+              loadingTimeoutRef.current = null;
+            }, 15000);
+          }
+        }
+      } catch (e) {
+        setIsLoading(false);
+      }
 
       // Dynamic height adjustment to avoid bottom being cut on mobile
       const setSize = () => {
@@ -491,6 +545,14 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
       if (joinObserver) {
         joinObserver.disconnect();
       }
+      if (loadingObserverRef.current) {
+        loadingObserverRef.current.disconnect();
+        loadingObserverRef.current = null;
+      }
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
   // Reset joined flag; leave flag stays true if we already left
   hasJoinedRef.current = false;
       
@@ -513,9 +575,28 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
     };
   }, [roomName, subject, roomId, session?.user?.name, router]);
 
-  return <div
-    ref={jitsiContainerRef}
-    id="jitsi-container"
-    style={{ width: '100%', maxWidth: '100%', height: '100dvh', margin: 0, padding: 0, overflow: 'hidden', background: '#101014' }}
-  />;
+  const LoadingOverlay = () => (
+    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(180deg, rgba(16,16,20,0.9), rgba(16,16,20,0.7))', zIndex: 9999 }}>
+      <div style={{ textAlign: 'center', color: '#fff' }}>
+        <svg width="48" height="48" viewBox="0 0 50 50" style={{ marginBottom: 12 }}>
+          <circle cx="25" cy="25" r="20" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="4" />
+          <path fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" d="M45 25a20 20 0 0 1-20 20" >
+            <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite" />
+          </path>
+        </svg>
+        <div style={{ fontSize: 16, fontWeight: 600 }}>Loading meeting…</div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100dvh' }}>
+      <div
+        ref={jitsiContainerRef}
+        id="jitsi-container"
+        style={{ width: '100%', maxWidth: '100%', height: '100dvh', margin: 0, padding: 0, overflow: 'hidden', background: '#101014' }}
+      />
+      {isLoading && <LoadingOverlay />}
+    </div>
+  );
 }
