@@ -54,6 +54,8 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
   const [interestedUsers, setInterestedUsers] = useState<any[]>([]);
   const [showInterestedDropdown, setShowInterestedDropdown] = useState<boolean>(false);
   const [loadingInterests, setLoadingInterests] = useState<boolean>(false);
+  const [joiningLocal, setJoiningLocal] = useState<boolean>(false);
+  const joiningTimerRef = React.useRef<number | null>(null);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const topicRef = React.useRef<HTMLSpanElement | null>(null);
   const titleContainerRef = React.useRef<HTMLDivElement | null>(null);
@@ -410,13 +412,25 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
     }
   };
 
-  const handleJoinClick = async () => {
-    if (isJoining) return; // Prevent multiple clicks
+    const handleJoinClick = async () => {
+    if (isJoining || joiningLocal) return; // Prevent multiple clicks
     if (notStarted) {
       // optionally show an alert/toast here; keep simple alert to avoid adding dependencies
       alert('This room is scheduled to start later. You can join once it starts.');
       return;
     }
+    // show immediate local joining state for 2s so UI reads 'Joining...'
+    setJoiningLocal(true);
+    // clear any existing timer
+    if (joiningTimerRef.current) {
+      window.clearTimeout(joiningTimerRef.current as any);
+      joiningTimerRef.current = null;
+    }
+    joiningTimerRef.current = window.setTimeout(() => {
+      setJoiningLocal(false);
+      joiningTimerRef.current = null;
+    }, 2000) as any;
+      
     await onJoin(room);
     // Optimistically notify parent that a participant joined so UI updates immediately
     try {
@@ -425,6 +439,15 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
       if (onParticipantUpdate) onParticipantUpdate(room.id, current + 1);
     } catch {}
   };
+    // cleanup join timer on unmount
+  React.useEffect(() => {
+    return () => {
+      if (joiningTimerRef.current) {
+        window.clearTimeout(joiningTimerRef.current as any);
+        joiningTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // (interest toggle implemented later, below)
 
@@ -923,11 +946,12 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
             className={styles['room-card__join-btn']}
             onClick={handleJoinClick}
             aria-label="Join Room"
-            style={{ fontSize: 15, padding: '0.5rem 1.6rem', borderRadius: 8, color: '#ffd700', border: 'none', fontWeight: 700, boxShadow: 'none', transition: 'background 0.18s, color 0.18s', outline: 'none', minWidth: 100, opacity: isJoining ? 0.7 : 1, pointerEvents: isJoining ? 'none' : 'auto' }}
-            disabled={isFull || isJoining}
+            style={{ fontSize: 15, padding: '0.5rem 1.6rem', borderRadius: 8, color: '#ffd700', border: 'none', fontWeight: 700, boxShadow: 'none', transition: 'background 0.18s, color 0.18s', outline: 'none', minWidth: 100, opacity: (joiningLocal || isJoining) ? 0.7 : 1, pointerEvents: (joiningLocal || isJoining) ? 'none' : 'auto' }}
+            disabled={isFull || joiningLocal || isJoining}
           >
-            {isJoining ? 'Joining...' : 'Join'}
+            {(joiningLocal || isJoining) ? 'Joining...' : 'Join'}
           </button>
+
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           {/* If scheduled and not started, show clock; if expired show expired; else show active */}
