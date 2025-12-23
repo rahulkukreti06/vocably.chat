@@ -221,13 +221,22 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
             } catch { return false; }
           };
 
-          if (hasPrejoin()) {
-            setIsLoading(false);
+       if (hasPrejoin()) {
+            // When prejoin DOM is already present, keep the loader visible
+            // for 3 seconds before hiding so users see the transition.
+            if (loadingTimeoutRef.current) {
+              clearTimeout(loadingTimeoutRef.current);
+              loadingTimeoutRef.current = null;
+            }
+            loadingTimeoutRef.current = window.setTimeout(() => {
+              setIsLoading(false);
+              loadingTimeoutRef.current = null;
+            }, 3000);
           } else {
             const obs = new MutationObserver(() => {
               if (!jitsiContainerRef.current) return;
               if (hasPrejoin() || jitsiContainerRef.current.childElementCount > 0) {
-                setIsLoading(false);
+                // schedule hiding the loader after 3s so prejoin UI is visible briefly
                 if (loadingObserverRef.current) {
                   loadingObserverRef.current.disconnect();
                   loadingObserverRef.current = null;
@@ -236,6 +245,10 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
                   clearTimeout(loadingTimeoutRef.current);
                   loadingTimeoutRef.current = null;
                 }
+                loadingTimeoutRef.current = window.setTimeout(() => {
+                  setIsLoading(false);
+                  loadingTimeoutRef.current = null;
+                }, 3000);
               }
             });
             obs.observe(jitsiContainerRef.current, { childList: true, subtree: true });
