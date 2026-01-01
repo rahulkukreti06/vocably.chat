@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import CommunityHeader from "../../components/CommunityHeader";
@@ -9,6 +9,7 @@ import CommunitySidePanel from "../../components/CommunitySidePanel";
 import CommunityRightPanel from "../../components/CommunityRightPanel";
 import AboutPopup from "../../components/AboutPopup";
 import { supabase } from "../../lib/supabaseClient";
+import GoogleSignInModal from '../../components/GoogleSignInModal';
 
 type Post = {
   id: string;
@@ -81,6 +82,7 @@ export default function CommunityPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [joinedState, setJoinedState] = useState<boolean>(false);
   const [membersState, setMembersState] = useState<number>(0);
+  const [showGoogleSignIn, setShowGoogleSignIn] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -244,14 +246,28 @@ export default function CommunityPage() {
     setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, comments: [...(p.comments ?? []), comment] } : p)));
 
     try {
-      const { error } = await supabase.from("community_comments").insert([{ post_id: postId, content: comment.content, created_by: comment.created_by, created_by_name: comment.created_by_name, created_by_image: comment.created_by_image }]);
-      if (error) console.warn("Supabase comment insert failed:", error.message);
+      const { data: inserted, error } = await supabase.from("community_comments").insert([{ post_id: postId, content: comment.content, created_by: comment.created_by, created_by_name: comment.created_by_name, created_by_image: comment.created_by_image }]).select().single();
+      if (error) {
+        console.warn("Supabase comment insert failed:", error.message);
+      } else if (inserted) {
+        try {
+          const post = posts.find((p) => p.id === postId);
+          // update optimistic comment (replace temp id with real id)
+          setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, comments: (p.comments || []).map((c: any) => c.id === comment.id ? { ...c, id: inserted.id, created_at: inserted.created_at } : c) } : p));
+          if (post && post.created_by && String(post.created_by) !== String(userId)) {
+            const { error: notifErr } = await supabase.from('community_notifications').insert([{ user_id: String(post.created_by), actor_id: String(userId), type: 'comment', post_id: postId, comment_id: inserted.id, data: { content: comment.content }, read: false }]);
+            if (notifErr) console.warn('notification insert failed', notifErr.message);
+          }
+        } catch (e) {
+          console.warn('notification creation failed', e);
+        }
+      }
     } catch (e) {}
   }
 
   async function handleVote(postId: string, value: number) {
     if (!session?.user) {
-      signIn();
+      setShowGoogleSignIn(true);
       return;
     }
 
@@ -329,7 +345,7 @@ export default function CommunityPage() {
                   onClick={async () => {
                     try {
                       if (!session?.user) {
-                        signIn();
+                        setShowGoogleSignIn(true);
                         return;
                       }
 
@@ -340,7 +356,7 @@ export default function CommunityPage() {
                         userName: session.user.name ?? null,
                         userEmail: session.user.email ?? null,
                         userImage: session.user.image ?? null
-                      };
+                      }
 
                       try {
                         const res = await fetch('/api/community-members', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -504,6 +520,7 @@ export default function CommunityPage() {
         </main>
 
         <AboutPopup open={showRightPanel} onClose={() => setShowRightPanel(false)} />
+        <GoogleSignInModal isOpen={showGoogleSignIn} onClose={() => setShowGoogleSignIn(false)} message={"Sign in to interact with the Vocably Community"} />
 
         <style dangerouslySetInnerHTML={{ __html: `
           .left-fixed { font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial }
