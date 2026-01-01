@@ -3,13 +3,15 @@
 import Link from "next/link";
 import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { useSession, signIn } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import GoogleSignInModal from './GoogleSignInModal';
 
 export default function CommunityRightPanel() {
   const { data: session } = useSession();
   const [members, setMembers] = useState<number>(0);
   const [joined, setJoined] = useState<boolean>(false);
   const [totalPosts, setTotalPosts] = useState<number | null>(null);
+  const [showGoogleSignIn, setShowGoogleSignIn] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -81,7 +83,7 @@ export default function CommunityRightPanel() {
 
   function handleJoinClick() {
     if (!session?.user) {
-      signIn();
+      setShowGoogleSignIn(true);
       return;
     }
     const nextJoined = !joined;
@@ -217,17 +219,8 @@ export default function CommunityRightPanel() {
         </div>
 
         <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: 12 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#9ca3af' }}>
-            <path d="M21 12a9 9 0 1 0-18 0 9 9 0 0 0 18 0z"></path>
-            <path d="M2.05 12H21.95"></path>
-          </svg>
-          <a href="https://vocably.chat/" target="_blank" rel="noreferrer" style={{ color: '#9ca3af', textDecoration: 'none' }}>vocably.chat</a>
+          <a href="https://vocably.chat/" target="_blank" rel="noreferrer" style={{ color: '#9ca3af', textDecoration: 'none', fontWeight: 700 }}>vocably.chat</a>
           <div style={{ marginLeft: 'auto', color: '#9ca3af', fontSize: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#9ca3af' }}>
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a8 8 0 0 0 0-6" />
-              <path d="M4.6 9a8 8 0 0 0 0 6" />
-            </svg>
             <span>Public</span>
           </div>
         </div>
@@ -249,6 +242,7 @@ export default function CommunityRightPanel() {
         </div>
       </div>
     </aside>
+    <GoogleSignInModal isOpen={showGoogleSignIn} onClose={() => setShowGoogleSignIn(false)} message={"Sign in to join the Vocably Community"} />
     <style dangerouslySetInnerHTML={{ __html: `
         .right-rail { scrollbar-width: none; -ms-overflow-style: none; }
         .right-rail::-webkit-scrollbar { width: 0; height: 0; }
