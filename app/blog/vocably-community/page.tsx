@@ -5,11 +5,34 @@ export const metadata = {
   title: 'Vocably Community — Blog',
   description: 'Vocably Community: A Space for Thoughtful Discussions and Shared Ideas',
   authors: [{ name: 'Vocably', url: 'https://vocably.chat' }],
+  keywords: ['Vocably', 'community', 'discussion', 'asynchronous', 'text community', 'blog'],
+  alternates: { canonical: 'https://vocably.chat/blog/vocably-community' },
   openGraph: {
     title: 'Vocably Community — Blog',
     description: 'Vocably Community: A Space for Thoughtful Discussions and Shared Ideas',
     url: 'https://vocably.chat/blog/vocably-community',
-  }
+    images: ['https://vocably.chat/favicon.png', '/favicon.png']
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Vocably Community — Blog',
+    description: 'Vocably Community: A Space for Thoughtful Discussions and Shared Ideas',
+    images: ['https://vocably.chat/favicon.png', '/favicon.png']
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true
+    }
+  },
+  icons: {
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png'
+  },
+  themeColor: '#fbd3cc'
 }
 
 export default function VocablyCommunityPage() {
