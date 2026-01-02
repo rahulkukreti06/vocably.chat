@@ -89,7 +89,7 @@ export default function BlogPage() {
             title="The Vocably Community"
             excerpt="Dec 31, 2025 · Written by Rahul Kukreti"
             href="/blog/vocably-community"
-            imageSrc="https://pixabay.com/get/g17aed49b0743d9730c93967ba29ad8975b855f83a3974e8886169b3edc3c3136f576a216501c6d7c83f22eb4bcbe7c03_1920.png"
+             imageSrc="/social-media-3846597_640.png"
           />
          
         </div>
