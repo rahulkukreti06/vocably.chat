@@ -19,7 +19,12 @@ export default function ChatClient() {
   const DEBUG_SHOW_LOCAL = false; // set true to reveal local typing in UI
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
-  const { data: session, status } = useSession();
+  // Defensively call useSession() — in some edge cases the hook may
+  // return undefined which would throw when destructuring. Use an
+  // intermediate value and optional chaining to avoid crashing the UI.
+  const sessionHook: any = typeof useSession === 'function' ? useSession() : undefined;
+  const session = sessionHook?.data;
+  const status: string = sessionHook?.status ?? 'loading';
   const [name, setName] = useState(() => session?.user?.name ?? 'User' + Math.floor(Math.random() * 900 + 100));
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<{ id: string; name: string }[]>([]);
