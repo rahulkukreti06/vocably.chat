@@ -11,7 +11,6 @@
     "chat-server": "node server/chat-server.js"
   },
   "dependencies": {
-    "better-sqlite3": "^9.6.0",
     "@auth/core": "^0.34.2",
     "@datadog/browser-logs": "^5.23.3",
     "@emotion/react": "^11.14.0",
