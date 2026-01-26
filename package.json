@@ -7,9 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "ws": "node server/ws.js"
+    "ws": "node server/ws.js",
+    "chat-server": "node server/chat-server.js"
   },
   "dependencies": {
+    "better-sqlite3": "^9.6.0",
     "@auth/core": "^0.34.2",
     "@datadog/browser-logs": "^5.23.3",
     "@emotion/react": "^11.14.0",
@@ -22,7 +24,9 @@
     "bootstrap": "^5.3.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cors": "^2.8.5",
     "dotenv": "^16.5.0",
+    "express": "^5.2.1",
     "firebase": "^12.0.0",
     "framer-motion": "^12.23.12",
     "jsonwebtoken": "^9.0.2",
@@ -35,6 +39,8 @@
     "react-hot-toast": "^2.5.2",
     "react-icons": "^5.5.0",
     "react-select": "^5.10.1",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.7.2",
     "tailwind-merge": "^3.2.0",
     "tinykeys": "^3.0.0",
     "tw-animate-css": "^1.2.9",
