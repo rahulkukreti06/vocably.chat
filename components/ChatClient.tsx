@@ -360,17 +360,19 @@ export default function ChatClient() {
               <button onClick={() => setMobileLeftOpen(false)} style={{ background: 'transparent', border: 'none', color: '#e6e6e6', fontSize: 18 }}>✕</button>
             </div>
             <nav style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 12px 12px 12px' }}>
-              <a className="left-nav-item" href="/">🏠 <span>Home</span></a>
-              <a className="left-nav-item" href="/community/chat">💬 <span>Vocably Chat</span></a>
-              
-              <a className="left-nav-item" href="/community">🔍 <span>Explore</span></a>
-              <a className="left-nav-item" href="/community/create">➕ <span>New conversation</span></a>
+              <a className="left-nav-item" href="/">💬 <span>Voice Rooms</span></a>
+              <a className="left-nav-item" href="/community/explore">🔍 <span>Explore Topics</span></a>
+              <a className="left-nav-item" href="/community">📊 <span>Community</span></a>
+              <a className="left-nav-item" href="/community/create">➕ <span>New Post</span></a>
+
               <div style={{ height: 1, background: 'rgba(255,255,255,0.03)', margin: '10px 0' }} />
+
               <div style={{ color: '#9ca3af', fontSize: 12, fontWeight: 700, marginTop: 6 }}>Explore</div>
               <a className="left-nav-item" href="/blog">📰 <span>Blog</span></a>
               <a className="left-nav-item" href="/blog/features">⚙️ <span>Features</span></a>
               <a className="left-nav-item" href="/blog/how-it-works">🔎 <span>How It Works</span></a>
               <a className="left-nav-item" href="/blog/about">ℹ️ <span>About</span></a>
+              <a className="left-nav-item" href="/">🚀 <span>Try Vocably</span></a>
               <a className="left-nav-item" href="/privacy">🔒 <span>Privacy Policy</span></a>
             </nav>
           </div>
