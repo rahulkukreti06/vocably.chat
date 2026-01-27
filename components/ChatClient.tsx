@@ -424,7 +424,7 @@ export default function ChatClient() {
 
                 <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', justifyContent: isMine ? 'flex-end' : 'flex-start', marginBottom: 12 }}>
                   {!isMine && (
-                    <div style={{ width: 36, flex: '0 0 36px', alignSelf: 'flex-start' }}>
+                    <div style={{ width: 36, flex: '0 0 36px', alignSelf: 'flex-start', marginLeft: 8 }}>
                       {m.image ? (
                         <img src={avatar} alt={""} aria-label={displayName} onError={() => handleMsgImageError(m.id)} style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover' }} />
                       ) : (
@@ -522,9 +522,8 @@ export default function ChatClient() {
           </div>
           {input.trim().length > 0 && (
             <button type="submit" title="Send message" aria-label="Send message" style={{ background: 'transparent', border: 'none', color: '#e6e6e6', width: 36, height: 36, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ transform: 'scale(1.9)', transformOrigin: 'center' }}>
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor" />
-                <path d="M2 3l7.5 9L22 12" stroke="rgba(0,0,0,0.08)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           )}
