@@ -360,7 +360,7 @@ export default function ChatClient() {
               <button onClick={() => setMobileLeftOpen(false)} style={{ background: 'transparent', border: 'none', color: '#e6e6e6', fontSize: 18 }}>✕</button>
             </div>
             <nav style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 12px 12px 12px' }}>
-              <a className="left-nav-item" href="/">💬 <span>Voice Rooms</span></a>
+              <a className="left-nav-item" href="/">🔊 <span>Voice Rooms</span></a>
               <a className="left-nav-item" href="/community/explore">🔍 <span>Explore Topics</span></a>
               <a className="left-nav-item" href="/community">📊 <span>Community</span></a>
               <a className="left-nav-item" href="/community/create">➕ <span>New Post</span></a>
@@ -383,7 +383,7 @@ export default function ChatClient() {
         <div className="chat-left-panel" style={{ flex: '0 0 240px', minWidth: 120, maxWidth: 280, height: '100%', overflow: 'auto', padding: 12, boxSizing: 'border-box', borderRight: '1px solid rgba(255,255,255,0.04)' }}>
           <div style={{ color: '#e6e6e6', fontWeight: 800, marginBottom: 8 }}>Panel</div>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <a className="left-nav-item" href="/">💬 <span>Voice Rooms</span></a>
+            <a className="left-nav-item" href="/">🔊 <span>Voice Rooms</span></a>
             
             <a className="left-nav-item" href="/community/explore">🔍 <span>Explore Topics</span></a>
             <a className="left-nav-item" href="/community">📊 <span>Community</span></a>
