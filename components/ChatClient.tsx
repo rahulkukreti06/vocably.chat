@@ -100,7 +100,6 @@ export default function ChatClient() {
       // Use session name (server maps socket.id -> username)
       const displayName = session.user?.name ?? name;
       socket.emit('add user', displayName);
-      console.log('connected to chat server', socket.id, 'url=', url);
     });
 
     // helper: scroll messages to bottom
@@ -141,7 +140,6 @@ export default function ChatClient() {
 
     // Server-authoritative typing list: list of {id,name}
     socket.on('typing users', (list: { id: string; name: string }[]) => {
-      console.log('received typing users from server:', list);
       const others = (list || [])
         .filter((item) => (DEBUG_SHOW_LOCAL ? true : item.id !== socketRef.current?.id))
         .map((item) => item.name);
@@ -281,14 +279,12 @@ export default function ChatClient() {
       typingRef.current = true;
       // emit typing without relying on name payload; server maps socket.id -> username
       socket.emit('typing');
-      console.log('emit typing (socket id)', socket.id);
     }
     // reset single debounce timeout
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = window.setTimeout(() => {
       if (typingRef.current) {
         socket.emit('stop typing');
-        console.log('emit stop typing (socket id)', socket.id);
         typingRef.current = false;
       }
       typingTimeoutRef.current = null;
@@ -344,10 +340,12 @@ export default function ChatClient() {
               <span style={{ fontWeight: 600 }}>Online ({onlineUsers.length})</span>
             </div>
           )}
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-            <path d="M16 11c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM8 11c1.657 0 3-1.343 3-3S9.657 5 8 5 5 6.343 5 8s1.343 3 3 3z" fill="#ffffff" />
-            <path d="M2 20c0-2.761 2.686-5 6-5h8c3.314 0 6 2.239 6 5v1H2v-1z" fill="#ffffff" />
-          </svg>
+          {!isSmallScreen && (
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+              <path d="M16 11c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM8 11c1.657 0 3-1.343 3-3S9.657 5 8 5 5 6.343 5 8s1.343 3 3 3z" fill="#ffffff" />
+              <path d="M2 20c0-2.761 2.686-5 6-5h8c3.314 0 6 2.239 6 5v1H2v-1z" fill="#ffffff" />
+            </svg>
+          )}
           <button className="hamburger" type="button" onClick={() => setMobileLeftOpen(true)} aria-label="Open menu">☰</button>
         </div>
       </div>
@@ -362,7 +360,7 @@ export default function ChatClient() {
             <nav style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 12px 12px 12px' }}>
               <a className="left-nav-item" href="/">🔊 <span>Voice Rooms</span></a>
               <a className="left-nav-item" href="/community/explore">🔍 <span>Explore Topics</span></a>
-              <a className="left-nav-item" href="/community">📊 <span>Community</span></a>
+              <a className="left-nav-item" href="/community">👥 <span>Community</span></a>
               <a className="left-nav-item" href="/community/create">➕ <span>New Post</span></a>
 
               <div style={{ height: 1, background: 'rgba(255,255,255,0.03)', margin: '10px 0' }} />
@@ -386,7 +384,7 @@ export default function ChatClient() {
             <a className="left-nav-item" href="/">🔊 <span>Voice Rooms</span></a>
             
             <a className="left-nav-item" href="/community/explore">🔍 <span>Explore Topics</span></a>
-            <a className="left-nav-item" href="/community">📊 <span>Community</span></a>
+            <a className="left-nav-item" href="/community">👥 <span>Community</span></a>
             <a className="left-nav-item" href="/community/create">➕ <span>New Post</span></a>
 
             <div style={{ height: 1, background: 'rgba(255,255,255,0.03)', margin: '10px 0' }} />
