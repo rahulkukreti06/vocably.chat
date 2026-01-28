@@ -97,9 +97,11 @@ export default function ChatClient() {
 
     socket.on('connect', () => {
       setSocketId((socket.id as string) || null);
-      // Use session name (server maps socket.id -> username)
+      // Use session name and a stable id (email or user id) so server
+      // can persist first-join times across sessions/devices
       const displayName = session.user?.name ?? name;
-      socket.emit('add user', displayName);
+      const stableId = session.user?.email ?? (session.user as any)?.id ?? null;
+      socket.emit('add user', { id: stableId, name: displayName });
     });
 
     // helper: scroll messages to bottom
@@ -226,7 +228,8 @@ export default function ChatClient() {
     const socket = socketRef.current;
     if (!socket || !socket.connected) return;
     const displayName = session?.user?.name ?? name;
-    socket.emit('add user', displayName);
+    const stableId = session?.user?.email ?? (session?.user as any)?.id ?? null;
+    socket.emit('add user', { id: stableId, name: displayName });
   }, [session, name]);
 
   const send = (e?: React.FormEvent) => {
@@ -324,12 +327,17 @@ export default function ChatClient() {
                 <div ref={onlineDropdownRef} className="online-dropdown" style={{ position: 'absolute', top: '48px', right: 12, width: 220, background: '#18181b', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 8, padding: 10, zIndex: 2000 }}>
                   <div style={{ fontWeight: 700, color: '#e6e6e6', marginBottom: 8 }}>Online ({onlineUsers.length})</div>
                   <div style={{ maxHeight: 240, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {onlineUsers.length === 0 ? <div style={{ color: '#9a9a9a' }}>No one online</div> : onlineUsers.map((u) => (
-                      <div key={u.id} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <div style={{ width: 28, height: 28, borderRadius: 8, background: getColorForName(u.name), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700 }}>{((u.name || 'U').trim().charAt(0) || 'U').toUpperCase()}</div>
-                        <div style={{ color: '#e6e6e6' }}>{u.name}</div>
-                      </div>
-                    ))}
+                    {onlineUsers.length === 0 ? <div style={{ color: '#9a9a9a' }}>No one online</div> : onlineUsers.map((u) => {
+                      const raw = (u && (u as any).name) ?? 'U';
+                      const displayName = typeof raw === 'string' ? raw : (raw && typeof raw === 'object' && 'name' in raw ? String((raw as any).name) : String(raw));
+                      const initial = (displayName.trim().charAt(0) || 'U').toUpperCase();
+                      return (
+                        <div key={u.id} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <div style={{ width: 28, height: 28, borderRadius: 8, background: getColorForName(displayName), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700 }}>{initial}</div>
+                          <div style={{ color: '#e6e6e6' }}>{displayName}</div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -541,15 +549,20 @@ export default function ChatClient() {
           <div style={{ color: '#e6e6e6', fontWeight: 800, marginBottom: 8 }}>Participants ({onlineUsers.length})</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {onlineUsers.length === 0 && <div style={{ color: '#9a9a9a' }}>No one online</div>}
-               {onlineUsers.map((u) => (
-                 <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                   <div style={{ position: 'relative', width: 36, height: 36 }}>
-                     <div style={{ width: 36, height: 36, borderRadius: 8, background: getColorForName(u.name), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700 }}>{((u.name || 'U').trim().charAt(0) || 'U').toUpperCase()}</div>
-                     <span style={{ position: 'absolute', width: 10, height: 10, borderRadius: 999, background: '#34c759', right: -2, bottom: -2, border: '2px solid #131316' }} />
+               {onlineUsers.map((u) => {
+                 const raw = (u && (u as any).name) ?? 'U';
+                 const displayName = typeof raw === 'string' ? raw : (raw && typeof raw === 'object' && 'name' in raw ? String((raw as any).name) : String(raw));
+                 const initial = (displayName.trim().charAt(0) || 'U').toUpperCase();
+                 return (
+                   <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                     <div style={{ position: 'relative', width: 36, height: 36 }}>
+                       <div style={{ width: 36, height: 36, borderRadius: 8, background: getColorForName(displayName), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700 }}>{initial}</div>
+                       <span style={{ position: 'absolute', width: 10, height: 10, borderRadius: 999, background: '#34c759', right: -2, bottom: -2, border: '2px solid #131316' }} />
+                     </div>
+                     <div style={{ color: '#e6e6e6' }}>{displayName}</div>
                    </div>
-                   <div style={{ color: '#e6e6e6' }}>{u.name}</div>
-                 </div>
-               ))}
+                 );
+               })}
           </div>
         </div>
 
