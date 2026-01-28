@@ -97,11 +97,9 @@ export default function ChatClient() {
 
     socket.on('connect', () => {
       setSocketId((socket.id as string) || null);
-      // Use session name and a stable id (email or user id) so server
-      // can persist first-join times across sessions/devices
+      // Use session name (server maps socket.id -> username)
       const displayName = session.user?.name ?? name;
-      const stableId = session.user?.email ?? (session.user as any)?.id ?? null;
-      socket.emit('add user', { id: stableId, name: displayName });
+      socket.emit('add user', displayName);
     });
 
     // helper: scroll messages to bottom
@@ -228,8 +226,7 @@ export default function ChatClient() {
     const socket = socketRef.current;
     if (!socket || !socket.connected) return;
     const displayName = session?.user?.name ?? name;
-    const stableId = session?.user?.email ?? (session?.user as any)?.id ?? null;
-    socket.emit('add user', { id: stableId, name: displayName });
+    socket.emit('add user', displayName);
   }, [session, name]);
 
   const send = (e?: React.FormEvent) => {
@@ -328,6 +325,7 @@ export default function ChatClient() {
                   <div style={{ fontWeight: 700, color: '#e6e6e6', marginBottom: 8 }}>Online ({onlineUsers.length})</div>
                   <div style={{ maxHeight: 240, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {onlineUsers.length === 0 ? <div style={{ color: '#9a9a9a' }}>No one online</div> : onlineUsers.map((u) => {
+                      // defensive: ensure name is a string before calling string methods
                       const raw = (u && (u as any).name) ?? 'U';
                       const displayName = typeof raw === 'string' ? raw : (raw && typeof raw === 'object' && 'name' in raw ? String((raw as any).name) : String(raw));
                       const initial = (displayName.trim().charAt(0) || 'U').toUpperCase();
