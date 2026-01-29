@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import ReactDOM from 'react-dom';
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, X, Plus, Sun, Moon, ChevronDown } from "lucide-react";
@@ -282,175 +283,67 @@ export const Header: React.FC<HeaderProps> = ({ onCreateRoomClick, onProfileClic
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
-          {/* Mobile Dropdown Menu */}
-          {menuOpen && (
-            <div className="header-mobile-menu">
-              <Link 
-                href="/community" 
-                className="header-btn"
-                onClick={() => setMenuOpen(false)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '0.5rem',
-                  color: '#10b981',
-                  border: '1px solid #10b98140',
-                  marginBottom: '0.5rem',
-                  textDecoration: 'none',
-                  width: '100%',
-                  textAlign: 'center',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="8" r="3" />
-                  <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
-                </svg>
-                Community
-              </Link>
-              <Link 
-                href="/privacy"
-                className="header-btn"
-                onClick={() => setMenuOpen(false)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '0.5rem',
-                  color: '#10b981',
-                  border: '1px solid #10b98140',
-                  marginBottom: '0.5rem',
-                  textDecoration: 'none',
-                  width: '100%',
-                  textAlign: 'center',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                </svg>
-                Privacy Policy
-              </Link>
-              <Link
-                href="/blog"
-                className="header-btn"
-                onClick={() => setMenuOpen(false)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '0.5rem',
-                  color: '#10b981',
-                  border: '1px solid #10b98140',
-                  marginBottom: '0.5rem',
-                  textDecoration: 'none',
-                  width: '100%',
-                  textAlign: 'center',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20" />
-                  <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z" />
-                </svg>
-                Blog
-              </Link>
-              <button
-                className="theme-btn"
-                onClick={handleThemeClick}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '0.5rem',
-                  color: '#10b981',
-                  border: '1px solid #10b98140',
-                  marginBottom: '0.5rem',
-                  textDecoration: 'none',
-                  width: '100%',
-                  textAlign: 'center',
-                  transition: 'all 0.2s ease',
-                  background: 'transparent',
-                  cursor: 'pointer',
-                  fontSize: '1rem'
-                }}
-              >
-                {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-                {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
-              </button>
-              {status === "loading" ? null : !session ? (
-                <button
-                  className="header-btn"
-                  onClick={() => {
-                    signIn("google");
-                    setMenuOpen(false);
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '0.5rem',
-                    color: '#10b981',
-                    border: '1px solid #10b98140',
-                    marginBottom: '0.5rem',
-                    textDecoration: 'none',
-                    width: '100%',
-                    textAlign: 'center',
-                    transition: 'all 0.2s ease',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                    fontSize: '1rem'
-                  }}
+          {/* Mobile Slide-over Menu (rendered in a portal so it sits above page content) */}
+          {typeof window !== 'undefined' && menuOpen && (
+            (() => {
+              const headerEl = document.querySelector('.header-root');
+              // small offset to place panel just below header bottom border
+              const headerHeight = headerEl ? Math.round((headerEl as HTMLElement).getBoundingClientRect().height) : 52;
+              const topOffset = headerHeight + 6; // ~6px gap under header border
+              const menu = (
+                <div
+                  className="header-mobile-backdrop open"
+                  onClick={() => setMenuOpen(false)}
+                  style={{ position: 'fixed', top: topOffset, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.0)', zIndex: 9999, display: 'flex', justifyContent: 'flex-end', transition: 'background 200ms ease' }}
                 >
-                  <Image src="/google.svg" alt="Google" width={20} height={20} />
-                  Sign in with Google
-                </button>
-              ) : (
-                <button
-                  className="header-btn"
-                  onClick={() => {
-                    signOut();
-                    setMenuOpen(false);
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '0.5rem',
-                    color: '#ef4444',
-                    border: '1px solid #ef444440',
-                    marginBottom: '0.5rem',
-                    textDecoration: 'none',
-                    width: '100%',
-                    textAlign: 'center',
-                    transition: 'all 0.2s ease',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                    fontSize: '1rem'
-                  }}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                    <polyline points="16 17 21 12 16 7"></polyline>
-                    <line x1="21" y1="12" x2="9" y2="12"></line>
-                  </svg>
-                  Sign out
-                </button>
-              )}
-            </div>
+                  <div
+                    className="header-mobile-panel open"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ position: 'fixed', top: topOffset, right: 0, bottom: 0, width: '50%', maxWidth: 420, minWidth: 240, background: '#000', transform: 'translateX(0)', transition: 'transform 220ms cubic-bezier(.2,.9,.2,1)', boxShadow: '-8px 0 24px rgba(2,6,23,0.5)', overflow: 'auto', padding: 12, boxSizing: 'border-box', zIndex: 10000 }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', padding: '12px' }}>
+                      <div style={{ fontWeight: 800, color: '#e6e6e6' }}>Menu</div>
+                    </div>
+                    <nav style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 8px 12px 8px' }}>
+                      <Link href="/chat" className="header-btn" onClick={() => setMenuOpen(false)} style={{ padding: '10px', borderRadius: 8, color: '#cbd5e1', textDecoration: 'none' }}>💬 Vocably Chat</Link>
+                      <Link href="/community/explore" className="header-btn" onClick={() => setMenuOpen(false)} style={{ padding: '10px', borderRadius: 8, color: '#cbd5e1', textDecoration: 'none' }}>🔍 Explore Topics</Link>
+                      <Link href="/community" className="header-btn" onClick={() => setMenuOpen(false)} style={{ padding: '10px', borderRadius: 8, color: '#cbd5e1', textDecoration: 'none' }}>👥 Community</Link>
+                      <Link href="/community/create" className="header-btn" onClick={() => setMenuOpen(false)} style={{ padding: '10px', borderRadius: 8, color: '#cbd5e1', textDecoration: 'none' }}>➕ New Community Post</Link>
+
+                      <div style={{ height: 1, background: 'rgba(255,255,255,0.03)', margin: '10px 0' }} />
+
+                      <div style={{ color: '#9ca3af', fontSize: 12, fontWeight: 700, marginTop: 6 }}>Explore</div>
+                      <Link href="/blog" className="header-btn" onClick={() => setMenuOpen(false)} style={{ padding: '10px', borderRadius: 8, color: '#cbd5e1', textDecoration: 'none' }}>📰 Blog</Link>
+                      <Link href="/blog/features" className="header-btn" onClick={() => setMenuOpen(false)} style={{ padding: '10px', borderRadius: 8, color: '#cbd5e1', textDecoration: 'none' }}>⚙️ Features</Link>
+                      <Link href="/blog/how-it-works" className="header-btn" onClick={() => setMenuOpen(false)} style={{ padding: '10px', borderRadius: 8, color: '#cbd5e1', textDecoration: 'none' }}>🔎 How It Works</Link>
+                      <Link href="/blog/about" className="header-btn" onClick={() => setMenuOpen(false)} style={{ padding: '10px', borderRadius: 8, color: '#cbd5e1', textDecoration: 'none' }}>ℹ️ About</Link>
+                      <Link href="/privacy" className="header-btn" onClick={() => setMenuOpen(false)} style={{ padding: '10px', borderRadius: 8, color: '#cbd5e1', textDecoration: 'none' }}>🔒 Privacy Policy</Link>
+
+                      <div style={{ height: 1, background: 'rgba(255,255,255,0.03)', margin: '10px 0' }} />
+
+                      {/* mobile theme toggle removed */}
+
+                      {status === 'loading' ? null : !session ? (
+                        <button className="header-btn" onClick={() => { signIn('google'); setMenuOpen(false); }} style={{ padding: '10px', borderRadius: 8, color: '#cbd5e1', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+                          <Image src="/google.svg" alt="Google" width={18} height={18} />
+                          <span style={{ marginLeft: 8 }}>Sign in with Google</span>
+                        </button>
+                      ) : (
+                        <button className="header-btn" onClick={() => { signOut(); setMenuOpen(false); }} style={{ padding: '10px', borderRadius: 8, color: '#cbd5e1', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                          </svg>
+                          <span>Sign out</span>
+                        </button>
+                      )}
+                    </nav>
+                  </div>
+                </div>
+              );
+              return ReactDOM.createPortal(menu, document.body);
+            })()
           )}
         </div>
       ) : (
