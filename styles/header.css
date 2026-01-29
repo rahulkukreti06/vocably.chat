@@ -398,6 +398,24 @@ html.dark .search-input input:focus {
   transform-origin: top;
 }
 
+/* Hide scrollbar for the mobile slide-over panel used by Header.tsx */
+.header-mobile-panel {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+.header-mobile-panel::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+}
+
+/* Reduce font weight for buttons inside the mobile slide-over to make text lighter */
+.header-mobile-panel .header-btn,
+.header-mobile-panel .theme-btn,
+.header-mobile-panel .header-btn span {
+  font-weight: 400;
+}
+
 /* Keep mobile dropdown buttons link-like (no filled background) */
 .header-mobile-menu .header-btn,
 .header-mobile-menu .theme-btn {
@@ -467,6 +485,25 @@ html.dark .search-input input:focus {
   height: 20px;
 }
 
+/* Slide-in animation for the right-side mobile panel */
+@keyframes slideInRight {
+  from { transform: translateX(20%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes backdropFadeIn {
+  from { background: rgba(0,0,0,0); }
+  to { background: rgba(0,0,0,0.35); }
+}
+
+.header-mobile-panel.open {
+  animation: slideInRight 260ms cubic-bezier(.2,.9,.2,1) both;
+}
+
+.header-mobile-backdrop.open {
+  animation: backdropFadeIn 260ms ease both;
+}
+
 /* Mobile menu button styles */
 .header-menu-btn {
   background: none;
@@ -485,4 +522,22 @@ html.dark .search-input input:focus {
 
 .header-menu-btn:active {
   transform: scale(0.95);
+}
+
+/* Mobile-only: show only the hamburger icon (no border/background/hover) */
+@media (max-width: 640px) {
+  .header-menu-btn {
+    background: transparent !important;
+    border: none !important;
+    color: inherit !important;
+    padding: 0.25rem !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .header-menu-btn:hover,
+  .header-menu-btn:active {
+    background: transparent !important;
+    transform: none !important;
+  }
 }
