@@ -54,7 +54,7 @@ export default function CommunitySidePanel({ mobile, open = true, onClose }: { m
             <span className="nav-icon">🏠</span>
             <span className="nav-label">Home</span>
           </a>
-          <a className="nav-item" href="https://vocably.chat/community/chat" onClick={(e) => { e.preventDefault(); alert('Feature coming soon'); }}>
+          <a className="nav-item" href="https://vocably.chat/chat" onClick={(e) => { e.preventDefault(); alert('Feature coming soon'); }}>
             <span className="nav-icon">💬</span>
             <span className="nav-label">Vocably Chat</span>
           </a>
