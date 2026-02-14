@@ -425,6 +425,35 @@ export const Header: React.FC<HeaderProps> = ({ onCreateRoomClick, onProfileClic
                       Blog
                     </Link>
 
+                       {/* Chat link - Desktop dropdown */}
+                    <Link
+                      href="/chat"
+                      className="header-btn"
+                      onClick={() => setProfileMenuOpen(false)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '0.5rem',
+                        color: '#10b981',
+                        border: '1px solid #10b98140',
+                        textDecoration: 'none',
+                        width: '100%',
+                        textAlign: 'left',
+                        transition: 'all 0.2s ease',
+                        background: 'transparent',
+                        cursor: 'pointer',
+                        fontSize: '0.95rem',
+                        justifyContent: 'flex-start'
+                      }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                      </svg>
+                      Chat
+                    </Link>
+
                     {/* Removed Contact Us from desktop dropdown */}
 
                     <button
