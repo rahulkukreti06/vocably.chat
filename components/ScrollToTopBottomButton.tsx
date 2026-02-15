@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { FaArrowDown, FaArrowUp } from "react-icons/fa";
+import { FaArrowDown, FaArrowUp, FaComments } from "react-icons/fa";
+import Link from "next/link";
 
 export default function ScrollToTopBottomButton() {
   const [atBottom, setAtBottom] = useState(false);
@@ -55,21 +56,37 @@ export default function ScrollToTopBottomButton() {
   if (!show) return null;
 
   return (
-    <button
-      className="scroll-fab fancy-fab"
-      onClick={handleClick}
-      aria-label={atBottom ? "Scroll to top" : "Scroll to bottom"}
-    >
-      <span className="fab-bg-glow" />
-      <span className="fab-icon">
-        <span className="fab-arrow">
-          {atBottom ? (
-            <FaArrowUp size={32} style={{ color: '#fff', filter: 'none' }} />
-          ) : (
-            <FaArrowDown size={32} style={{ color: '#fff', filter: 'none' }} />
-          )}
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+      <Link
+        href="/chat"
+        aria-label="Open chat"
+        className="scroll-fab fancy-fab"
+        style={{ transform: 'translateY(-76px)', zIndex: 10 }}
+      >
+        <span className="fab-bg-glow" />
+        <span className="fab-icon">
+          <span className="fab-arrow">
+            <FaComments size={32} style={{ color: '#fff', filter: 'none' }} />
+          </span>
         </span>
-      </span>
-    </button>
+      </Link>
+
+      <button
+        className="scroll-fab fancy-fab"
+        onClick={handleClick}
+        aria-label={atBottom ? "Scroll to top" : "Scroll to bottom"}
+      >
+        <span className="fab-bg-glow" />
+        <span className="fab-icon">
+          <span className="fab-arrow">
+            {atBottom ? (
+              <FaArrowUp size={32} style={{ color: '#fff', filter: 'none' }} />
+            ) : (
+              <FaArrowDown size={32} style={{ color: '#fff', filter: 'none' }} />
+            )}
+          </span>
+        </span>
+      </button>
+    </div>
   );
 }
