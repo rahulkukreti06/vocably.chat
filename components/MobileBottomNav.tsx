@@ -81,6 +81,14 @@ export default function MobileBottomNav(): JSX.Element {
 		padding: '4px 8px'
 	};
 
+	const topLineStyle: React.CSSProperties = {
+		height: 1,
+		width: '100%',
+		maxWidth: 1024,
+		margin: '0 auto',
+		background: '#535353'
+	};
+	
 	const itemStyle: React.CSSProperties = {
 		display: 'flex',
 		flexDirection: 'column',
