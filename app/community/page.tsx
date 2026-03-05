@@ -10,6 +10,7 @@ import CommunityRightPanel from "../../components/CommunityRightPanel";
 import AboutPopup from "../../components/AboutPopup";
 import { supabase } from "../../lib/supabaseClient";
 import GoogleSignInModal from '../../components/GoogleSignInModal';
+import MobileBottomNav from '../../components/MobileBottomNav';
 
 type Post = {
   id: string;
@@ -126,6 +127,26 @@ export default function CommunityPage() {
       window.removeEventListener('click', onWindowClick);
     };
   }, []);
+
+  // simple media query hook for small screens
+  function useMediaQuery(query: string) {
+    const [matches, setMatches] = useState(false);
+    useEffect(() => {
+      if (typeof window === 'undefined') return;
+      const media = window.matchMedia(query);
+      if (media.matches !== matches) setMatches(media.matches);
+      const listener = () => setMatches(media.matches);
+      if (media.addEventListener) media.addEventListener('change', listener);
+      else media.addListener(listener);
+      return () => {
+        if (media.removeEventListener) media.removeEventListener('change', listener);
+        else media.removeListener(listener);
+      };
+    }, [matches, query]);
+    return matches;
+  }
+
+  const isMobile = useMediaQuery('(max-width: 640px)');
 
   useEffect(() => {
     if (session?.user) {
@@ -615,6 +636,7 @@ export default function CommunityPage() {
           .post-clamp { text-overflow: ellipsis; }
         ` }} />
       </div>
+      {isMobile && <MobileBottomNav />}
     </div>
   );
 }
