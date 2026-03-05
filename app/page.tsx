@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { ChevronDown } from "lucide-react";
 import dynamic from 'next/dynamic';
 import { WhatsAppCommunityModal } from '../components/WhatsAppCommunityModal';
+import MobileBottomNav from '../components/MobileBottomNav';
 
 const ScrollToTopBottomButton = dynamic(() => import('../components/ScrollToTopBottomButton'), { ssr: false });
 
@@ -93,6 +94,24 @@ export default function Page() {
   const participantCounts = useLiveParticipantCounts(rooms);
   const isMobile = useMediaQuery('(max-width: 640px)');
   const { data: session } = useSession();
+
+  // Open Create modal when visiting with ?create=1
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('create')) {
+        setShowCreateModal(true);
+        // remove the param to avoid reopening on navigation
+        params.delete('create');
+        const newSearch = params.toString();
+        const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '');
+        window.history.replaceState({}, '', newUrl);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
 
   // Show WhatsApp modal after 30 seconds
   // Automatic WhatsApp modal display removed to avoid unexpected popups.
@@ -1174,6 +1193,7 @@ export default function Page() {
     <div> © 2025 Vocably — All rights reserved.</div>
   </footer>
   <ScrollToTopBottomButton />
+  {isMobile && <MobileBottomNav />}
       <WhatsAppCommunityModal 
         isOpen={showWhatsAppModal}
         onClose={() => setShowWhatsAppModal(false)}
