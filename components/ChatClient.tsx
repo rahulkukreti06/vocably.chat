@@ -70,6 +70,15 @@ export default function ChatClient() {
     }, 120);
   };
 
+  // Safely parse timestamps coming from server. Some clients/servers
+  // may send missing or malformed `ts` values which make
+  // `new Date(ts).toLocaleTimeString()` throw (Invalid Date).
+  const safeDate = (ts?: string | number | null) => {
+    const d = ts ? new Date(ts as any) : new Date();
+    if (isNaN(d.getTime())) return new Date();
+    return d;
+  };
+
   // deterministic color palette for initials (Gmail-like)
   const avatarColors = [
     '#F44336', '#E91E63', '#9C27B0', '#673AB7', '#3F51B5', '#2196F3', '#03A9F4', '#00BCD4', '#009688', '#4CAF50',
@@ -414,9 +423,9 @@ export default function ChatClient() {
         <div ref={messagesContainerRef} className="messages-scroll" style={{ display: 'flex', flexDirection: 'column', borderRadius: 0, flex: 1, overflow: 'auto', padding: 0, marginBottom: 0, background: '#1A1A1E', minHeight: 0 }}>
           {messages.map((m, idx) => {
             const prev = messages[idx - 1];
-            const showDate = !prev || new Date(prev.ts).toDateString() !== new Date(m.ts).toDateString();
+            const showDate = !prev || safeDate(prev.ts).toDateString() !== safeDate(m.ts).toDateString();
             const isMine = session?.user?.email && m.userId === session.user.email;
-            const time = new Date(m.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const time = safeDate(m.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const avatar = m.image || '/vocably_icon_no_circle_white.png';
             const displayName = (m.userName && String(m.userName).trim()) || (m.user && String(m.user).trim()) || (m.userId && String(m.userId).split('@')[0]) || 'User';
             const initials = String(displayName).split(' ').map(s => (s || '').trim().charAt(0)).join('').slice(0,2).toUpperCase();
@@ -424,7 +433,7 @@ export default function ChatClient() {
               <React.Fragment key={m.id}>
                 {showDate && (
                   <div style={{ textAlign: 'center', margin: '18px 0', color: '#9a9a9a' }}>
-                    <span style={{ display: 'inline-block', padding: '6px 14px', borderRadius: 20, background: 'rgba(255,255,255,0.02)', fontSize: 12 }}>{new Date(m.ts).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</span>
+                    <span style={{ display: 'inline-block', padding: '6px 14px', borderRadius: 20, background: 'rgba(255,255,255,0.02)', fontSize: 12 }}>{safeDate(m.ts).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</span>
                   </div>
                 )}
 
