@@ -47,6 +47,7 @@ export default function ChatClient() {
   const TYPING_TIMER_LENGTH = 2000; // ms
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showSignInPrompt, setShowSignInPrompt] = useState(false);
   const emojiPickerRef = useRef<HTMLDivElement | null>(null);
   const emojiButtonRef = useRef<HTMLButtonElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -55,6 +56,10 @@ export default function ChatClient() {
   const emojiList = ['😀','😁','😂','🤣','😊','😍','😎','🤔','👍','👏','🙏','🔥','🎉','😅','🙌','😢','😡','🤯','😴','❤️'];
 
   const sendEmoji = (emoji: string) => {
+    if (!session) {
+      setShowSignInPrompt(true);
+      return;
+    }
     const payload: any = { id: (globalThis.crypto && 'randomUUID' in globalThis.crypto) ? crypto.randomUUID() : String(Date.now()) + Math.random(), text: emoji, userId: session?.user?.email ?? name, userName: session?.user?.name ?? name };
     if (session?.user?.image) payload.image = session.user.image;
     // emit to server
@@ -98,7 +103,8 @@ export default function ChatClient() {
   useEffect(() => {
     // Only connect after session is available (requires sign-in)
     if (status === 'loading') return;
-    if (!session) return; // do not connect when not signed in
+    // Allow connecting even when not signed in so anonymous visitors can
+    // view the chat. Use a generated `name` when `session` is not present.
     
     const url = process.env.NEXT_PUBLIC_CHAT_SERVER_URL || 'https://msg.vocably.chat/';
     const socket = io(url);
@@ -107,7 +113,7 @@ export default function ChatClient() {
     socket.on('connect', () => {
       setSocketId((socket.id as string) || null);
       // Use session name (server maps socket.id -> username)
-      const displayName = session.user?.name ?? name;
+      const displayName = session?.user?.name ?? name;
       socket.emit('add user', displayName);
     });
 
@@ -241,6 +247,10 @@ export default function ChatClient() {
   const send = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!input.trim()) return;
+    if (!session) {
+      setShowSignInPrompt(true);
+      return;
+    }
     const payload: any = { id: (globalThis.crypto && 'randomUUID' in globalThis.crypto) ? crypto.randomUUID() : String(Date.now()) + Math.random(), text: input.trim(), userId: session?.user?.email ?? name, userName: session?.user?.name ?? name };
     if (session?.user?.image) payload.image = session.user.image;
     // emit both names for compatibility with different server versions
@@ -301,17 +311,6 @@ export default function ChatClient() {
   };
 
   const isLoading = status === 'loading';
-
-  if (!session && !isLoading) {
-    return (
-      <div style={{ maxWidth: 900, margin: '28px auto', padding: 12 }}>
-        <h1>Chat</h1>
-        <p>You must be signed in to use the chat.</p>
-        <button onClick={() => signIn('google')}>Sign in with Google</button>
-      </div>
-    );
-  }
-
   return (
     <div className="chat-root" style={{ width: '100vw', height: '100vh', padding: 0, margin: 0, background: '#131316', color: '#e6e6e6', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div className="chat-header" style={{ background: '#131316', zIndex: 1000, position: 'sticky', top: 0 }}>
@@ -505,7 +504,7 @@ export default function ChatClient() {
               value={input}
               ref={textareaRef}
               onChange={(e) => handleInputChange(e.target.value)}
-              placeholder="Type a message"
+              placeholder={session ? "Type a message" : "Sign in to send messages"}
               rows={1}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -551,6 +550,66 @@ export default function ChatClient() {
           )}
         </form>
         </div>
+
+      {/* Sign-in prompt modal for guests attempting to send */}
+      {showSignInPrompt && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6000 }}
+          onClick={() => setShowSignInPrompt(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: 'min(560px, 92%)',
+              background: '#0b0b0c',
+              borderRadius: 16,
+              padding: '28px 28px 20px',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.7)',
+              color: '#e6e6e6',
+              textAlign: 'center'
+            }}
+          >
+            <h2 style={{ margin: 0, marginBottom: 8, fontSize: 32, fontWeight: 800, color: '#fff', fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto' }}>Sign Up</h2>
+            <p style={{ marginTop: 6, marginBottom: 20, color: '#9aa4b2' }}>Sign in to interact with Vocably Chat</p>
+
+            <button
+              onClick={() => signIn('google')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                margin: '6px auto',
+                background: '#fff',
+                color: '#0b1220',
+                border: 'none',
+                padding: '16px 22px',
+                borderRadius: 40,
+                width: '100%',
+                maxWidth: 520,
+                minHeight: 56,
+                fontWeight: 700,
+                fontSize: 16,
+                cursor: 'pointer',
+                boxShadow: '0 6px 22px rgba(0,0,0,0.36)',
+                position: 'relative',
+                paddingLeft: 72
+              }}
+            >
+              <svg style={{ position: 'absolute', left: 18, top: '50%', transform: 'translateY(-50%)' }} width="20" height="20" viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                <path d="M533.5 278.4c0-18.5-1.5-37.1-4.6-54.8H272v103.7h147.7c-6.3 34-25.5 62.8-54.4 82l88 68.5c51.4-47.4 81.2-117.2 81.2-199.4z" fill="#4285F4"/>
+                <path d="M272 544.3c73.6 0 135.4-24.4 180.5-66.1l-88-68.5c-24.6 16.6-56 26.5-92.5 26.5-71 0-131.2-47.9-152.7-112.2l-90.3 69.6C69.9 483.6 164.8 544.3 272 544.3z" fill="#34A853"/>
+                <path d="M119.3 328.9c-10.8-32.3-10.8-66.4 0-98.7L29 160.6C10 198.1 0 239.4 0 272c0 32.6 10 73.9 29 111.4l90.3-54.5z" fill="#FBBC05"/>
+                <path d="M272 107.7c39.9-.6 78.1 14 107.1 40.1l80.6-80.6C407.4 24.2 345.6 0 272 0 164.8 0 69.9 60.7 29 160.6l90.3 69.6C140.8 155.6 201 107.7 272 107.7z" fill="#EA4335"/>
+              </svg>
+              <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none' }}>Continue with Google</span>
+            </button>
+
+            <div style={{ marginTop: 16 }}>
+              <button onClick={() => setShowSignInPrompt(false)} style={{ background: 'transparent', border: 'none', color: '#cbd5e1', fontWeight: 600, cursor: 'pointer' }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
 
         <div className="chat-right-panel" style={{ flex: '0 0 240px', minWidth: 120, maxWidth: 300, height: '100%', overflow: 'auto', padding: 12, boxSizing: 'border-box', borderLeft: '1px solid rgba(255,255,255,0.04)' }}>
           <div style={{ color: '#e6e6e6', fontWeight: 800, marginBottom: 8 }}>Participants ({onlineUsers.length})</div>
