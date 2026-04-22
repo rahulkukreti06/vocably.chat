@@ -39,6 +39,7 @@ const modalKeyframes = `@keyframes modalIn {
 const JoinRoomModal: React.FC<JoinRoomModalProps> = ({ isOpen, onCancel, onJoin, roomName, isJoining, requirePassword, passwordError, defaultUserName }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showMaintenance, setShowMaintenance] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -164,7 +165,11 @@ const JoinRoomModal: React.FC<JoinRoomModalProps> = ({ isOpen, onCancel, onJoin,
             <div className="modal-actions flex flex-col gap-3 mt-4">
               <button
                 className="btn btn--primary min-h-[44px] w-full mobile:min-h-[50px]"
-                onClick={() => onJoin(password)}
+                onClick={() => {
+                  // Show maintenance message instead of joining the room
+                  setShowMaintenance(true);
+                  try { window.dispatchEvent(new CustomEvent('showMaintenance')); } catch (e) {}
+                }}
                 disabled={isJoining || (requirePassword && !password)}
                 aria-busy={isJoining}
                 style={{ borderRadius: 12, fontWeight: 700, fontSize: 17, background: 'linear-gradient(90deg, #10b981 80%, #1de9b6 100%)', color: '#181a1b', boxShadow: '0 2px 12px 0 rgba(16,185,129,0.17)' }}
@@ -183,6 +188,11 @@ const JoinRoomModal: React.FC<JoinRoomModalProps> = ({ isOpen, onCancel, onJoin,
                 Cancel
               </button>
             </div>
+            {showMaintenance && (
+              <div style={{ padding: 12, textAlign: 'center', background: '#ffedd5', color: '#92400e', fontWeight: 500, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif", borderBottom: '1px solid rgba(0,0,0,0.06)', marginTop: 18 }}>
+                Server under maintenance. Will reopen tomorrow. You can use the Vocably Community in the meantime. <a href="/community" style={{ color: '#0b1220', fontWeight: 700, marginLeft: 8, textDecoration: 'none' }}>Open Vocably Community</a>
+              </div>
+            )}
           </div>
         </div>
       </div>
