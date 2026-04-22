@@ -13,6 +13,7 @@ import type { Metadata, Viewport } from 'next';
 import { Toaster } from 'react-hot-toast';
 import { Providers } from './providers';
 import Script from 'next/script';
+import MaintenanceBanner from '../components/MaintenanceBanner';
 
 export const metadata: Metadata = {
   title: {
@@ -135,6 +136,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* Removed 'container mx-auto' to avoid forced centering/padding on every route; each page can manage its own width */}
           {/* Removed global paddingTop so full-screen pages (e.g., /rooms pre-join & Jitsi) are flush with header; individual pages add their own offset */}
           <main className="relative min-h-screen main-content w-full">
+            <MaintenanceBanner />
             {children}
           </main>
           <Toaster position="top-right" />
