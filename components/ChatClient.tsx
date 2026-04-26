@@ -417,10 +417,6 @@ export default function ChatClient() {
           {isLoading && (
             <div style={{ padding: 20, textAlign: 'center', color: '#9a9a9a' }}>Loading session... please wait</div>
           )}
-          {/* Maintenance banner */}
-          <div style={{ padding: 12, textAlign: 'center', background: '#ffedd5', color: '#92400e', fontWeight: 500, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif", borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-            Server under maintenance. Will reopen tomorrow. You can use the Vocably Community in the meantime. <a href="/community" style={{ color: '#0b1220', fontWeight: 700, marginLeft: 8, textDecoration: 'none' }}>Open Vocably Community</a>
-          </div>
         
 
         <div ref={messagesContainerRef} className="messages-scroll" style={{ display: 'flex', flexDirection: 'column', borderRadius: 0, flex: 1, overflow: 'auto', padding: 0, marginBottom: 0, background: '#1A1A1E', minHeight: 0 }}>
