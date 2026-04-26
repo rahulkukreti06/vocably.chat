@@ -56,7 +56,6 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
   const [showInterestedDropdown, setShowInterestedDropdown] = useState<boolean>(false);
   const [loadingInterests, setLoadingInterests] = useState<boolean>(false);
   const [joiningLocal, setJoiningLocal] = useState<boolean>(false);
-  const [showMaintenance, setShowMaintenance] = useState<boolean>(false);
   const joiningTimerRef = React.useRef<number | null>(null);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const topicRef = React.useRef<HTMLSpanElement | null>(null);
@@ -66,7 +65,41 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
 
   // Removed debug console.log for production
 
-  
+  // Close menu when clicking outside
+  React.useEffect(() => {
+    let interval: any;
+    if (room.expires_at) {
+      interval = setInterval(() => setNow(Date.now()), 1000);
+      const expiresAt = new Date(room.expires_at).getTime();
+      if (Date.now() >= expiresAt) setExpired(true);
+    }
+    // scheduled start handling
+    if (room['scheduled_at']) {
+      try {
+        const s = new Date(room['scheduled_at']).getTime();
+        setStartsAt(s);
+        if (Date.now() < s) setNotStarted(true);
+        // ensure we tick every second for countdown
+        if (!interval) interval = setInterval(() => setNow(Date.now()), 1000);
+      } catch {}
+    }
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+      // Close interested dropdown when clicking outside
+      setShowInterestedDropdown(false);
+    }
+
+    if (menuOpen || showInterestedDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+  if (interval) clearInterval(interval);
+    };
+  }, [menuOpen]);
 
   // Measure title overflow and enable marquee if needed
   useEffect(() => {
@@ -160,49 +193,38 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
     }
   }, [room.id, notStarted]);
 
-  // Close menu when clicking outside
-  React.useEffect(() => {
-    let interval: any;
-    if (room.expires_at) {
-      interval = setInterval(() => setNow(Date.now()), 1000);
-      const expiresAt = new Date(room.expires_at).getTime();
-      if (Date.now() >= expiresAt) setExpired(true);
-    }
-
-    // scheduled start handling
-    if (room['scheduled_at']) {
-      try {
-        const s = new Date(room['scheduled_at']).getTime();
-        setStartsAt(s);
-        if (Date.now() < s) setNotStarted(true);
-        // ensure we tick every second for countdown
-        if (!interval) interval = setInterval(() => setNow(Date.now()), 1000);
-      } catch {}
-    }
-
+  // Close dropdown when clicking outside
+  useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
+      const target = event.target as HTMLElement;
+      if (!target.closest('.interested-dropdown-container')) {
+        setShowInterestedDropdown(false);
       }
-      // Close interested dropdown when clicking outside
-      setShowInterestedDropdown(false);
     }
 
-    if (menuOpen || showInterestedDropdown) {
+    if (showInterestedDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      if (interval) clearInterval(interval);
     };
-  }, [menuOpen, showInterestedDropdown, room.expires_at, room['scheduled_at']]);
-  
+  }, [showInterestedDropdown]);
+
+  // Load user's interest state when session becomes available
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user && notStarted) {
+      // Load interested users and check if current user is interested
+      fetchInterestedUsers();
+    }
+  }, [status, session?.user, notStarted, room.id]);
+
+  // Poll for interest updates for scheduled rooms (only when page is visible)
   useEffect(() => {
     if (!notStarted) return; // Only poll for scheduled rooms
-
+    
     let pollInterval: NodeJS.Timeout;
-
+    
     const startPolling = () => {
       pollInterval = setInterval(() => {
         if (status === 'authenticated' && !loadingInterests && !document.hidden) {
@@ -225,7 +247,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
 
     // Start polling immediately
     startPolling();
-
+    
     // Listen for page visibility changes
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
@@ -398,13 +420,21 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
             text: `Join the room ${room.name}`,
             url,
           });
-          return; // shared successfully
-        } catch (e) {
-          // fall through to prompt/copy fallback
+          return;
+        } catch (err) {
+          // If user cancels share or it fails, fall back to clipboard
+          console.debug('native share failed or cancelled', err);
         }
       }
-      // last resort: prompt with the link so user can copy manually
-      window.prompt('Copy this link to share the room', url);
+
+      // Fallback: copy to clipboard
+      if (navigator && (navigator as any).clipboard && (navigator as any).clipboard.writeText) {
+        await (navigator as any).clipboard.writeText(url);
+        alert('Room link copied to clipboard');
+      } else {
+        // last resort: prompt with the link so user can copy manually
+        window.prompt('Copy this link to share the room', url);
+      }
     } catch (err) {
       console.error('Failed to share/copy room link', err);
       try {
@@ -415,18 +445,42 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
     }
   };
 
-  const handleJoinClick = async () => {
+    const handleJoinClick = async () => {
     if (isJoining || joiningLocal) return; // Prevent multiple clicks
     if (notStarted) {
+      // optionally show an alert/toast here; keep simple alert to avoid adding dependencies
       alert('This room is scheduled to start later. You can join once it starts.');
       return;
     }
-    // Show maintenance banner instead of joining the meeting
-    setShowMaintenance(true);
+    // show immediate local joining state for 2s so UI reads 'Joining...'
+    setJoiningLocal(true);
+    // clear any existing timer
+    if (joiningTimerRef.current) {
+      window.clearTimeout(joiningTimerRef.current as any);
+      joiningTimerRef.current = null;
+    }
+    joiningTimerRef.current = window.setTimeout(() => {
+      setJoiningLocal(false);
+      joiningTimerRef.current = null;
+    }, 2000) as any;
+      
+    await onJoin(room);
+    // Optimistically notify parent that a participant joined so UI updates immediately
     try {
-      window.dispatchEvent(new CustomEvent('showMaintenance'));
-    } catch (e) {}
+      // Use the liveParticipantCount when available (avoid using stale room.participants)
+      const current = typeof liveParticipantCount === 'number' ? liveParticipantCount : (room.participants || 0);
+      if (onParticipantUpdate) onParticipantUpdate(room.id, current + 1);
+    } catch {}
   };
+    // cleanup join timer on unmount
+  React.useEffect(() => {
+    return () => {
+      if (joiningTimerRef.current) {
+        window.clearTimeout(joiningTimerRef.current as any);
+        joiningTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // (interest toggle implemented later, below)
 
